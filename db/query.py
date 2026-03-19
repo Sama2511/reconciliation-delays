@@ -3,7 +3,7 @@ from db.connection import get_connection
 
 
 def run_query(database,year, start_date, end_date):
-
+    conn = None
     try:
             
         conn = get_connection(database)
