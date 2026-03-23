@@ -45,6 +45,7 @@ class SettingsDialog(QDialog):
         self.load_settings()
 
     def build_ui(self):
+        self.setStyleSheet('QLabel { font-size: 13px; }')
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(8)
@@ -138,6 +139,7 @@ class SettingsDialog(QDialog):
         self.status_label.setText('Connexion en cours...')
         self.status_label.setStyleSheet('color: gray;')
         self.save_button.setEnabled(False)
+        self.cancel_button.setEnabled(False)
 
         self.worker = ConnectionWorker(
             server=server,
@@ -150,6 +152,7 @@ class SettingsDialog(QDialog):
 
     def on_save_done(self, success, message):
         self.save_button.setEnabled(True)
+        self.cancel_button.setEnabled(True)
         if success:
             setting = {
                 'server': self.entry_server_name.text(),

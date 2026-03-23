@@ -15,8 +15,10 @@ def fetch_dbs():
         cursor.execute('SELECT name FROM sys.databases')
         data = cursor.fetchall()
         dbs =[]
+        default_dbs = ['tempdb', 'model', 'msdb', 'master']
         for db in data:
-            dbs.append(db[0])
+            if db[0] not in default_dbs:
+                dbs.append(db[0])
         return dbs
     except AttributeError:
         print("Error fetching the databases")

@@ -29,7 +29,7 @@ def get_connection(database):
         print(f"Connection failed: {e}")
         return None
     except KeyError as e:
-        print(f"Missing config key: {e}")
+        print(f"Missing config key: {e} getconnection")
         return None
 
 def test_connection_sql_auth(database,server,username,password):
@@ -65,7 +65,7 @@ def test_connection_win_auth(database,server):
         print(f"Connection failed: {e}")
         return None
     except KeyError as e:
-        print(f"Missing config key: {e}")
+        print(f"Missing config key: {e} testconnection")
         return None
 
    

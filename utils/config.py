@@ -1,7 +1,15 @@
 import json 
 import os 
+import sys
 
-CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config.json')
+if getattr(sys, 'frozen', False):
+    # running as .exe
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    # running as .py
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+CONFIG_PATH = os.path.join(BASE_DIR, 'config.json')
 
 def save_config(config: dict):
     try:

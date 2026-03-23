@@ -24,7 +24,7 @@ class ReportWorker(QThread):
         self.file_path = file_path
 
     def run(self):
-        data = run_query(self.database, self.year_date, self.start_date, self.end_date)
+        data = run_query(self.database, self.start_date, self.end_date)
         if data is None:
             self.finished.emit(False, 'Erreur lors de la récupération des données')
             return
@@ -45,19 +45,26 @@ class MainScreen(QWidget):
         self.build_ui()
         self.get_dbs()
 
+    def closeEvent(self, event):
+        if self.worker and self.worker.isRunning():
+            self.worker.quit()
+            self.worker.wait()
+        super().closeEvent(event)
+
     def build_ui(self):
+        self.setStyleSheet('QLabel { font-size: 13px; }')
         layout = QVBoxLayout(self)
         layout.setContentsMargins(30, 32, 30, 32)
 
-        # Database | Year row
-        db_row = QHBoxLayout()
+        # Row 1: Database | Year
+        row1 = QHBoxLayout()
 
         db_col = QVBoxLayout()
         db_col.addWidget(QLabel('Base de données / Société'))
         self.database_dropdown = QComboBox()
         self.database_dropdown.setFixedHeight(32)
         db_col.addWidget(self.database_dropdown)
-        db_row.addLayout(db_col, 3)
+        row1.addLayout(db_col, 2)
 
         year_col = QVBoxLayout()
         year_col.addWidget(QLabel('Début Année Référence'))
@@ -68,12 +75,15 @@ class MainScreen(QWidget):
         self.year_entry.setDisplayFormat('yyyy-MM-dd')
         self.year_entry.setFixedHeight(32)
         year_col.addWidget(self.year_entry)
-        db_row.addLayout(year_col, 1)
+        row1.addLayout(year_col, 1)
 
-        layout.addLayout(db_row)
+        layout.addLayout(row1)
 
-        # Start date | End date row
-        date_row = QHBoxLayout()
+        layout.addSpacing(12)
+
+        # Row 2: Start date | End date
+        row2 = QHBoxLayout()
+        row2.setSpacing(16)
 
         start_col = QVBoxLayout()
         start_col.addWidget(QLabel('Début Période'))
@@ -84,7 +94,7 @@ class MainScreen(QWidget):
         self.start_date_entry.setDisplayFormat('yyyy-MM-dd')
         self.start_date_entry.setFixedHeight(32)
         start_col.addWidget(self.start_date_entry)
-        date_row.addLayout(start_col)
+        row2.addLayout(start_col)
 
         end_col = QVBoxLayout()
         end_col.addWidget(QLabel('Fin Période'))
@@ -95,21 +105,22 @@ class MainScreen(QWidget):
         self.end_date_entry.setDisplayFormat('yyyy-MM-dd')
         self.end_date_entry.setFixedHeight(32)
         end_col.addWidget(self.end_date_entry)
-        date_row.addLayout(end_col)
+        row2.addLayout(end_col)
 
-        layout.addLayout(date_row)
+        layout.addLayout(row2)
 
         layout.addStretch()
 
-        # Generate button
+        # Row 4: Status left | Generate button right
+        bottom_row = QHBoxLayout()
+        self.status_label = QLabel('')
+        bottom_row.addWidget(self.status_label)
+        bottom_row.addStretch()
         self.generate_button = QPushButton('Générer Rapport')
         self.generate_button.setFixedSize(130, 40)
         self.generate_button.clicked.connect(self.start_generate)
-        layout.addWidget(self.generate_button)
-
-        # Status
-        self.status_label = QLabel('')
-        layout.addWidget(self.status_label)
+        bottom_row.addWidget(self.generate_button)
+        layout.addLayout(bottom_row)
 
     def get_dbs(self):
         self.database_dropdown.clear()
@@ -129,6 +140,7 @@ class MainScreen(QWidget):
             file_path += '.xlsx'
 
         self.generate_button.setEnabled(False)
+        self.status_label.setStyleSheet('color: gray;')
         self.status_label.setText('Génération en cours...')
 
         self.worker = ReportWorker(
@@ -144,4 +156,5 @@ class MainScreen(QWidget):
 
     def on_generate_done(self, success, message):
         self.status_label.setText(message)
+        self.status_label.setStyleSheet('color: green;' if success else 'color: red;')
         self.generate_button.setEnabled(True)

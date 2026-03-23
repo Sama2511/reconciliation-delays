@@ -6,14 +6,14 @@ def export_to_excel(data, file_path):
         df.to_excel(file_path, index=False)
         return True
     except AttributeError:
-        print("No data to export")
+        print("Aucune donnée à exporter")
         return False
     except ValueError:
-        print("Invalid file format. use .xlsx")
+        print("Format de fichier invalide. Utilisez .xlsx")
         return False
     except PermissionError:
-        print("File is open in Excel. close it and try again")
+        print("Le fichier est ouvert dans Excel. Fermez-le et réessayez")
         return False
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        print(f"Erreur inattendue: {e}")
         return False
