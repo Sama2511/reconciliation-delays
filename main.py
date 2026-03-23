@@ -12,7 +12,7 @@ class App(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Délai de Paiement')
-        self.setFixedSize(500, 450)
+        self.setFixedSize(650, 300)
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -41,9 +41,9 @@ class App(QMainWindow):
 
         if not load_config():
             self.open_settings()
-
     def open_settings(self):
         dialog = SettingsDialog(self)
+        dialog.setting_saved.connect(self.main_screen.get_dbs)
         dialog.exec()
 
 

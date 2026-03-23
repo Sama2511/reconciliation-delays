@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
     QPushButton, QDateEdit, QFileDialog
 )
-from PyQt6.QtCore import QDate, QThread, pyqtSignal
+from PyQt6.QtCore import QDate, QThread, pyqtSignal, QLocale
 from db.query import run_query
 from db.fetch_databases import fetch_dbs
 from export.excel import export_to_excel
@@ -26,16 +26,16 @@ class ReportWorker(QThread):
     def run(self):
         data = run_query(self.database, self.year_date, self.start_date, self.end_date)
         if data is None:
-            self.finished.emit(False, 'Error fetching data from database')
+            self.finished.emit(False, 'Erreur lors de la récupération des données')
             return
         if data.empty:
-            self.finished.emit(False, 'No data found for the selected dates')
+            self.finished.emit(False, 'Aucune donnée trouvée pour les dates sélectionnées')
             return
         result = export_to_excel(data, self.file_path)
         if not result:
-            self.finished.emit(False, 'Error saving Excel file')
+            self.finished.emit(False, 'Erreur lors de la sauvegarde du fichier Excel')
             return
-        self.finished.emit(True, 'Report generated successfully')
+        self.finished.emit(True, 'Rapport généré avec succès')
 
 
 class MainScreen(QWidget):
@@ -63,6 +63,7 @@ class MainScreen(QWidget):
         year_col.addWidget(QLabel('Début Année Référence'))
         self.year_entry = QDateEdit()
         self.year_entry.setCalendarPopup(True)
+        self.year_entry.setLocale(QLocale(QLocale.Language.French))
         self.year_entry.setDate(QDate.currentDate())
         self.year_entry.setDisplayFormat('yyyy-MM-dd')
         self.year_entry.setFixedHeight(32)
@@ -78,6 +79,7 @@ class MainScreen(QWidget):
         start_col.addWidget(QLabel('Début Période'))
         self.start_date_entry = QDateEdit()
         self.start_date_entry.setCalendarPopup(True)
+        self.start_date_entry.setLocale(QLocale(QLocale.Language.French))
         self.start_date_entry.setDate(QDate.currentDate())
         self.start_date_entry.setDisplayFormat('yyyy-MM-dd')
         self.start_date_entry.setFixedHeight(32)
@@ -88,6 +90,7 @@ class MainScreen(QWidget):
         end_col.addWidget(QLabel('Fin Période'))
         self.end_date_entry = QDateEdit()
         self.end_date_entry.setCalendarPopup(True)
+        self.end_date_entry.setLocale(QLocale(QLocale.Language.French))
         self.end_date_entry.setDate(QDate.currentDate())
         self.end_date_entry.setDisplayFormat('yyyy-MM-dd')
         self.end_date_entry.setFixedHeight(32)
@@ -109,15 +112,16 @@ class MainScreen(QWidget):
         layout.addWidget(self.status_label)
 
     def get_dbs(self):
+        self.database_dropdown.clear()
         dbs = fetch_dbs()
         if dbs:
             self.database_dropdown.addItems(dbs)
         else:
-            self.database_dropdown.addItem('No databases found')
-
+            self.database_dropdown.addItem('Aucune base de données trouvée')
+            
     def start_generate(self):
         file_path, _ = QFileDialog.getSaveFileName(
-            self, 'Save report as', '', 'Excel files (*.xlsx)'
+            self, 'Enregistrer le rapport sous', '', 'Fichiers Excel (*.xlsx)'
         )
         if not file_path:
             return
@@ -125,7 +129,7 @@ class MainScreen(QWidget):
             file_path += '.xlsx'
 
         self.generate_button.setEnabled(False)
-        self.status_label.setText('Generating...')
+        self.status_label.setText('Génération en cours...')
 
         self.worker = ReportWorker(
             database=self.database_dropdown.currentText(),

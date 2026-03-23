@@ -29,12 +29,13 @@ class ConnectionWorker(QThread):
 
         if conn:
             conn.close()
-            self.finished.emit(True, f'Connected to {self.server}')
+            self.finished.emit(True, f'Connecté à {self.server}')
         else:
-            self.finished.emit(False, f"Can't connect to {self.server}")
+            self.finished.emit(False, f"Impossible de se connecter à {self.server}")
 
 
 class SettingsDialog(QDialog):
+    setting_saved = pyqtSignal()
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle('Parametre')
@@ -91,9 +92,6 @@ class SettingsDialog(QDialog):
 
         # Buttons row
         btn_row = QHBoxLayout()
-        self.test_button = QPushButton('Test')
-        self.test_button.clicked.connect(self.test_connection)
-        btn_row.addWidget(self.test_button)
 
         self.save_button = QPushButton('Enregistrer')
         self.save_button.clicked.connect(self.save_settings)
@@ -127,45 +125,42 @@ class SettingsDialog(QDialog):
         self.password_entry.setText(config.get('password', ''))
 
     def save_settings(self):
-        setting = {
-            'server': self.entry_server_name.text(),
-            'auth_type': self.authentication_entry.currentText(),
-            'username': self.username_entry.text(),
-            'password': self.password_entry.text(),
-        }
-        save_config(setting)
-        self.status_label.setText('Parametres Enregistrés')
+        if self.worker and self.worker.isRunning():
+            self.worker.finished.disconnect()
+            self.worker.quit()
+            self.worker.wait()
 
-    def test_connection(self):
         server = self.entry_server_name.text()
-        auth = self.authentication_entry.currentText()
-
         if not server:
             self.entry_server_name.setFocus()
             return
 
-        if auth == 'SQL Server Authentication':
-            if not self.username_entry.text():
-                self.username_entry.setFocus()
-                return
-            if not self.password_entry.text():
-                self.password_entry.setFocus()
-                return
-
-        self.status_label.setText('Testing...')
-        self.test_button.setEnabled(False)
+        self.status_label.setText('Connexion en cours...')
+        self.status_label.setStyleSheet('color: gray;')
         self.save_button.setEnabled(False)
 
         self.worker = ConnectionWorker(
             server=server,
-            auth=auth,
+            auth=self.authentication_entry.currentText(),
             username=self.username_entry.text(),
             password=self.password_entry.text()
         )
-        self.worker.finished.connect(self.on_test_done)
+        self.worker.finished.connect(self.on_save_done)
         self.worker.start()
 
-    def on_test_done(self, _, message):
-        self.status_label.setText(message)
-        self.test_button.setEnabled(True)
+    def on_save_done(self, success, message):
         self.save_button.setEnabled(True)
+        if success:
+            setting = {
+                'server': self.entry_server_name.text(),
+                'auth_type': self.authentication_entry.currentText(),
+                'username': self.username_entry.text(),
+                'password': self.password_entry.text(),
+            }
+            save_config(setting)
+            self.setting_saved.emit()
+            self.accept()
+        else:
+            self.status_label.setText(message)
+            self.status_label.setStyleSheet('color: red;')
+
