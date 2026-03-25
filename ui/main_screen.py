@@ -1,15 +1,15 @@
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
-    QPushButton, QDateEdit, QFileDialog
+    QPushButton, QDateEdit, QFileDialog, QLineEdit
 )
 from PyQt6.QtCore import QDate, QThread, pyqtSignal, QLocale
 from db.query import run_query
 from db.fetch_databases import fetch_dbs
 from export.excel import export_to_excel
+from db.ref_year import get_ref_year
 
 
 class ReportWorker(QThread):
@@ -24,6 +24,7 @@ class ReportWorker(QThread):
         self.file_path = file_path
 
     def run(self):
+        print(self.database, self.year_date)
         data = run_query(self.database, self.start_date, self.end_date)
         if data is None:
             self.finished.emit(False, 'Erreur lors de la récupération des données')
@@ -37,6 +38,8 @@ class ReportWorker(QThread):
             return
         self.finished.emit(True, 'Rapport généré avec succès')
 
+    
+  
 
 class MainScreen(QWidget):
     def __init__(self):
@@ -63,17 +66,22 @@ class MainScreen(QWidget):
         db_col.addWidget(QLabel('Base de données / Société'))
         self.database_dropdown = QComboBox()
         self.database_dropdown.setFixedHeight(32)
+        self.database_dropdown.currentTextChanged.connect(self.ref_year)
         db_col.addWidget(self.database_dropdown)
         row1.addLayout(db_col, 2)
 
         year_col = QVBoxLayout()
-        year_col.addWidget(QLabel('Début Année Référence'))
-        self.year_entry = QDateEdit()
-        self.year_entry.setCalendarPopup(True)
-        self.year_entry.setLocale(QLocale(QLocale.Language.French))
-        self.year_entry.setDate(QDate.currentDate())
-        self.year_entry.setDisplayFormat('yyyy-MM-dd')
+        year_label_row = QHBoxLayout()
+        year_label_row.addWidget(QLabel('Début Année Référence'))
+        info = QLabel('ⓘ')
+        info.setToolTip('Si la date affichée est incorrecte,\nmerci de la modifier via\nParamètres société – module « Identification »')
+        year_label_row.addWidget(info)
+        year_label_row.addStretch()
+        year_col.addLayout(year_label_row)
+        self.year_entry = QLineEdit()
         self.year_entry.setFixedHeight(32)
+        self.year_entry.setReadOnly(True)
+        self.year_entry.setToolTip('Si la date affichée est incorrecte,\nmerci de la modifier via\nParamètres société – module « Identification »')
         year_col.addWidget(self.year_entry)
         row1.addLayout(year_col, 1)
 
@@ -129,7 +137,17 @@ class MainScreen(QWidget):
             self.database_dropdown.addItems(dbs)
         else:
             self.database_dropdown.addItem('Aucune base de données trouvée')
-            
+
+    def ref_year(self, _=None):
+        database = self.database_dropdown.currentText()
+        year = get_ref_year(database)
+        if not year:
+            self.year_entry.setText('Année introuvable')
+        else:
+            self.year_entry.setText(year[0][0])
+
+
+
     def start_generate(self):
         file_path, _ = QFileDialog.getSaveFileName(
             self, 'Enregistrer le rapport sous', '', 'Fichiers Excel (*.xlsx)'
@@ -139,6 +157,7 @@ class MainScreen(QWidget):
         if not file_path.endswith('.xlsx'):
             file_path += '.xlsx'
 
+        self.last_file_path = file_path
         self.generate_button.setEnabled(False)
         self.status_label.setStyleSheet('color: gray;')
         self.status_label.setText('Génération en cours...')
@@ -147,7 +166,7 @@ class MainScreen(QWidget):
             database=self.database_dropdown.currentText(),
             start_date=self.start_date_entry.date().toString('yyyy-MM-dd'),
             end_date=self.end_date_entry.date().toString('yyyy-MM-dd'),
-            year_date=self.year_entry.date().toString('yyyy-MM-dd'),
+            year_date=self.year_entry.text(),
             file_path=file_path
         )
         self.worker.finished.connect(self.on_generate_done)
@@ -158,3 +177,5 @@ class MainScreen(QWidget):
         self.status_label.setText(message)
         self.status_label.setStyleSheet('color: green;' if success else 'color: red;')
         self.generate_button.setEnabled(True)
+        if success:
+            os.startfile(self.last_file_path)

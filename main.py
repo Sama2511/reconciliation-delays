@@ -4,7 +4,7 @@ if getattr(sys, 'frozen', False):
     BASE_DIR = sys._MEIPASS
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
+    
 sys.path.append(BASE_DIR)
 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton
@@ -12,7 +12,6 @@ from PyQt6.QtGui import QIcon
 from ui.main_screen import MainScreen
 from ui.settings_screen import SettingsDialog
 from utils.config import load_config
-
 
 class App(QMainWindow):
     def __init__(self):
@@ -39,7 +38,7 @@ class App(QMainWindow):
         self.settings_btn.setToolTip('Parametre')
         self.settings_btn.clicked.connect(self.open_settings)
         nav_layout.addWidget(self.settings_btn)
-
+        
         root_layout.addWidget(nav)
 
         # Main screen

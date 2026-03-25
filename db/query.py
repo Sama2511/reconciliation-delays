@@ -6,13 +6,16 @@ from db.connection import get_connection
 warnings.filterwarnings('ignore', category=UserWarning)
 
 def run_query(database, start_date, end_date):
+    year = datetime.strptime(start_date, '%Y-%m-%d').year
+    year_start = f'{year}-01-01'
+
+    start_date_minus1 = (datetime.strptime(start_date, '%Y-%m-%d')-timedelta(days=1)).strftime('%Y-%m-%d')
+   
     conn = None
     try:
         conn = get_connection(database)
 
-        query = f"""-- start_date = 
--- end_date =  2025-06-30
--- year_start = 2024-01-01 from commentaire societe
+        query = f"""
 
 --Invoices payed in trimester
 SELECT * FROM (
@@ -134,7 +137,7 @@ FROM (
     WHERE JO_Num IN ('AC')
     AND e.CT_Num NOT LIKE '3%'
     AND e.CT_Num <> 'NULL'
-    AND CONVERT(date, JM_Date) BETWEEN '2025-01-01' AND '2025-03-31' -- 01-01 debut period / fin period - 1 
+    AND CONVERT(date, JM_Date) BETWEEN '{year_start}' AND '{start_date_minus1}' -- 01-01 debut period / debut period - 1 
 ) as Factures
 LEFT JOIN (
     SELECT e.CT_Num as N_Fournisseur,
@@ -209,7 +212,7 @@ JOIN dbo.F_COMPTET as c on c.CT_Num = e.CT_Num
 WHERE JO_Num IN ('AC')
 AND e.CT_Num NOT LIKE '3%'
 AND e.CT_Num <> 'NULL'  
- AND CONVERT(date, JM_Date) BETWEEN '2025-01-01' AND '2025-03-31' -- 01-01 debut period / fin period - 1 
+ AND CONVERT(date, JM_Date) BETWEEN '{year_start}' AND '{start_date_minus1}' -- 01-01 debut period / fin period - 1 
  ) as Factures
 LEFT JOIN (SELECT e.CT_Num as N_Fournisseur,
        FORMAT(DATEADD(day, EC_Jour - 1, JM_Date), 'yyyy/MM/dd')as Date_de_facture,
@@ -221,7 +224,7 @@ WHERE JO_Num IN (SELECT JO_Num FROM dbo.F_JOURNAUX
 WHERE CG_Num like '5%')  
 AND e.CT_Num NOT LIKE '3%'
 AND e.CT_Num <> 'NULL' 
-AND CONVERT(date, JM_Date) BETWEEN '{start_date}' AND '{end_date}'  -- debut period - fin period  
+AND CONVERT(date, JM_Date) BETWEEN '{year_start}' AND '{end_date}'  -- 01-01 debut periode / debut periode -1 
 ) as Paiements
 ON Factures.N_Fournisseur = Paiements.N_Fournisseur
 AND Factures.EC_Lettrage IS NOT NULL
@@ -283,7 +286,7 @@ JOIN (
     SELECT CT_Num, EC_RefPiece, EC_Lettrage
     FROM dbo.F_ECRITUREC
     WHERE JO_Num = 'RN'
-    AND CONVERT(date, JM_Date) = '2025-01-01' -- 01/01 debut period
+    AND CONVERT(date, JM_Date) = '{year_start}' -- 01/01 debut period
     AND CT_Num <> 'NULL'
     AND CT_Num NOT LIKE '3%'
     AND EC_RefPiece <> ''
@@ -367,7 +370,7 @@ JOIN (
     SELECT CT_Num, EC_RefPiece, EC_Lettrage
     FROM dbo.F_ECRITUREC
     WHERE JO_Num = 'RN'
-    AND CONVERT(date, JM_Date) = '2025-01-01' -- 01-01 debut period
+    AND CONVERT(date, JM_Date) = '{year_start}' -- 01-01 debut period
     AND CT_Num <> 'NULL'
     AND CT_Num NOT LIKE '3%'
     AND EC_RefPiece <> ''
@@ -387,7 +390,7 @@ WHERE JO_Num IN (SELECT JO_Num FROM dbo.F_JOURNAUX
 WHERE CG_Num like '5%')  
 AND e.CT_Num NOT LIKE '3%'
 AND e.CT_Num <> 'NULL' 
-AND CONVERT(date, JM_Date) BETWEEN '2025-01-01' AND '{end_date}' ) as Paiements  -- 01/01 debut period / fin period
+AND CONVERT(date, JM_Date) BETWEEN '{year_start}' AND '{end_date}' ) as Paiements  -- 01/01 debut period / fin period
 ON Factures.N_Fournisseur = Paiements.N_Fournisseur
 AND Factures.EC_Lettrage IS NOT NULL
 AND Paiements.EC_Lettrage IS NOT NULL
