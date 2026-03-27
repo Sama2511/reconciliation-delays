@@ -21,18 +21,22 @@ SELECT * FROM (
 
 --Invoices payed in trimester
 
-SELECT  CT_Intitule as Fournisseurs,Factures.EC_Intitule,
-    EC_RefPiece as [N°Facture],
-    Factures.EC_Montant as [Montant de Facture],
-    Paiements.EC_Montant as montant_paiement,
-    Factures.Date_de_facture as [Date de facture],
-
+SELECT  CT_Intitule as FOURNISSEUR,
+    EC_RefPiece as [N° FACTURE],
+    Factures.Date_de_facture as [DATE FACTURE],
+    Factures.EC_Montant as [MONTANT FACTURE],
+    Factures.Mois_de_livraison as [MOIS LIVRAISON],
+    Commentaire as [CONDITION PAIEMENT (JRS)],
+    FORMAT(DATEADD(day, Commentaire, CAST(Factures.Date_de_facture AS DATE)), 'yyyy/MM/dd') as [DATE ECHEANCE], 
     CASE 
         WHEN Paiements.EC_Lettrage IS NULL AND Paiements.EC_Pointage IS NULL THEN 'Non réglé' 
         WHEN Paiements.EC_Lettrage IS NOT NULL AND Paiements.EC_Lettrage <>''  THEN 'Totalement réglé' 
         WHEN Paiements.EC_Lettrage IS NULL OR Paiements.EC_Lettrage = '' AND (Paiements.EC_Pointage IS NOT NULL OR Paiements.EC_Pointage <>'' )  THEN 'Partiellement réglé'
-    END AS [Statut de paiement]
+    END AS [STATUT PAIEMENT]
     ,
+    Paiements.Date_de_facture as [DATE PAIEMENT],
+    Paiements.EC_Montant as [MONTANT PAIEMENT],
+
     CASE
         WHEN Paiements.EC_Lettrage IS NULL AND Paiements.EC_Pointage IS NULL THEN NULL
         WHEN Paiements.EC_Lettrage IS NOT NULL 
@@ -40,14 +44,10 @@ SELECT  CT_Intitule as Fournisseurs,Factures.EC_Intitule,
         WHEN (Paiements.EC_Lettrage IS NULL OR Paiements.EC_Lettrage = '')
          AND Paiements.EC_Pointage IS NOT NULL 
          AND Paiements.EC_Pointage <> '' THEN Factures.EC_Montant - Paiements.EC_Montant
-    END AS [Reliquat]
+    END AS [RELIQUAT]
     ,
-    Paiements.Date_de_facture as [Date de paiement],
-    Factures.EC_Pointage as [facture pointage],Paiements.EC_Pointage as [paiement pointage],
-    Factures.Mois_de_livraison as [Mois de livraison],
-    Commentaire as [Condition de paiement en jrs],
-    CASE WHEN jour_paiement - jour_facture < 0 then 'En Avance' Else CAST(jour_paiement - jour_facture as varchar) END as [Délai de paiement en jrs],
-    FORMAT(DATEADD(day, Commentaire, CAST(Factures.Date_de_facture AS DATE)), 'yyyy/MM/dd') as [Date d'échéance], 
+    
+    CASE WHEN jour_paiement - jour_facture < 0 then 'En Avance' Else CAST(jour_paiement - jour_facture as varchar) END as [DELAI PAIEMENT (JRS)],
     CASE 
     WHEN Paiements.Date_de_facture IS NULL THEN
         CASE
@@ -59,7 +59,7 @@ SELECT  CT_Intitule as Fournisseurs,Factures.EC_Intitule,
         END
     WHEN CAST(jour_paiement - jour_facture AS INT) - Commentaire <= 0 THEN NULL
     ELSE CAST(CAST(jour_paiement - jour_facture AS INT) - Commentaire AS VARCHAR)
-END as Retard_en_jours,
+END as [RETARD JOURS],
 CASE 
     WHEN Paiements.Date_de_facture IS NULL THEN
         CASE 
@@ -74,7 +74,7 @@ CASE
         CAST(FORMAT(DATEADD(day, Commentaire, CAST(Factures.Date_de_facture AS DATE)), 'yyyy/MM/dd') AS DATE),
         CAST(Paiements.Date_de_facture AS DATE)
     ) + 1 AS VARCHAR)
-END as Retard_en_mois
+END as [RETARD MOIS]
 FROM (
 SELECT c.CT_Intitule ,JO_Num, e.CT_Num as N_Fournisseur,
        FORMAT(DATEADD(day, EC_Jour - 1, JM_Date), 'yyyy/MM/dd')as Date_de_facture,
@@ -84,7 +84,8 @@ SELECT c.CT_Intitule ,JO_Num, e.CT_Num as N_Fournisseur,
         CONVERT(INT, CT_Commentaire) as Commentaire,EC_Pointage
 FROM dbo.F_ECRITUREC as e 
 JOIN dbo.F_COMPTET as c on c.CT_Num = e.CT_Num
-WHERE (JO_Num IN ('AC') AND EC_Sens = 1 )
+WHERE (JO_Num IN (SELECT JO_Num FROM dbo.F_JOURNAUX
+WHERE JO_Type = 0) AND EC_Sens = 1)
 AND e.CT_Num NOT LIKE '3%'
 AND e.CT_Num <> 'NULL' 
 AND CONVERT(date, JM_Date) BETWEEN '{start_date}' AND '{end_date}' ) as Factures
@@ -95,8 +96,9 @@ LEFT JOIN (SELECT e.CT_Num as N_Fournisseur,
 FROM dbo.F_ECRITUREC as e
 JOIN dbo.F_COMPTET as c on c.CT_Num = e.CT_Num
 WHERE (JO_Num IN (SELECT JO_Num FROM dbo.F_JOURNAUX
-WHERE CG_Num like '5%')  
-OR (JO_num IN ('AC') AND EC_Sens = 0))
+WHERE CG_Num like '5%')
+OR (JO_num IN (SELECT JO_Num FROM dbo.F_JOURNAUX
+WHERE JO_Type = 0) AND EC_Sens = 0))
 AND e.CT_Num NOT LIKE '3%'
 AND e.CT_Num <> 'NULL'   
 AND CONVERT(date, JM_Date) BETWEEN '{start_date}' AND '{end_date}' ) as Paiements
@@ -117,18 +119,22 @@ AND (
 UNION
 
 -- Past invoices paid choosen trismester 
-SELECT  CT_Intitule as Fournisseurs,Factures.EC_Intitule,
-    EC_RefPiece as [N°Facture],
-    Factures.EC_Montant as [Montant de Facture],
-    Paiements.EC_Montant as montant_paiement,
-    Factures.Date_de_facture as [Date de facture],
-
+SELECT  CT_Intitule as FOURNISSEUR,
+    EC_RefPiece as [N° FACTURE],
+    Factures.Date_de_facture as [DATE FACTURE],
+    Factures.EC_Montant as [MONTANT FACTURE],
+    Factures.Mois_de_livraison as [MOIS LIVRAISON],
+    Commentaire as [CONDITION PAIEMENT (JRS)],
+    FORMAT(DATEADD(day, Commentaire, CAST(Factures.Date_de_facture AS DATE)), 'yyyy/MM/dd') as [DATE ECHEANCE], 
     CASE 
         WHEN Paiements.EC_Lettrage IS NULL AND Paiements.EC_Pointage IS NULL THEN 'Non réglé' 
         WHEN Paiements.EC_Lettrage IS NOT NULL AND Paiements.EC_Lettrage <>''  THEN 'Totalement réglé' 
         WHEN Paiements.EC_Lettrage IS NULL OR Paiements.EC_Lettrage = '' AND (Paiements.EC_Pointage IS NOT NULL OR Paiements.EC_Pointage <>'' )  THEN 'Partiellement réglé'
-    END AS [Statut de paiement]
+    END AS [STATUT PAIEMENT]
     ,
+    Paiements.Date_de_facture as [DATE PAIEMENT],
+    Paiements.EC_Montant as [MONTANT PAIEMENT],
+
     CASE
         WHEN Paiements.EC_Lettrage IS NULL AND Paiements.EC_Pointage IS NULL THEN NULL
         WHEN Paiements.EC_Lettrage IS NOT NULL 
@@ -136,14 +142,10 @@ SELECT  CT_Intitule as Fournisseurs,Factures.EC_Intitule,
         WHEN (Paiements.EC_Lettrage IS NULL OR Paiements.EC_Lettrage = '')
          AND Paiements.EC_Pointage IS NOT NULL 
          AND Paiements.EC_Pointage <> '' THEN Factures.EC_Montant - Paiements.EC_Montant
-    END AS [Reliquat]
+    END AS [RELIQUAT]
     ,
-    Paiements.Date_de_facture as [Date de paiement],
-    Factures.EC_Pointage as [facture pointage],Paiements.EC_Pointage as [paiement pointage],
-    Factures.Mois_de_livraison as [Mois de livraison],
-    Commentaire as [Condition de paiement en jrs],
-    CASE WHEN jour_paiement - jour_facture < 0 then 'En Avance' Else CAST(jour_paiement - jour_facture as varchar) END as [Délai de paiement en jrs],
-    FORMAT(DATEADD(day, Commentaire, CAST(Factures.Date_de_facture AS DATE)), 'yyyy/MM/dd') as [Date d'échéance], 
+    
+    CASE WHEN jour_paiement - jour_facture < 0 then 'En Avance' Else CAST(jour_paiement - jour_facture as varchar) END as [DELAI PAIEMENT (JRS)],
     CASE 
     WHEN Paiements.Date_de_facture IS NULL THEN
         CASE
@@ -155,7 +157,7 @@ SELECT  CT_Intitule as Fournisseurs,Factures.EC_Intitule,
         END
     WHEN CAST(jour_paiement - jour_facture AS INT) - Commentaire <= 0 THEN NULL
     ELSE CAST(CAST(jour_paiement - jour_facture AS INT) - Commentaire AS VARCHAR)
-END as Retard_en_jours,
+END as [RETARD JOURS],
 CASE 
     WHEN Paiements.Date_de_facture IS NULL THEN
         CASE 
@@ -170,7 +172,7 @@ CASE
         CAST(FORMAT(DATEADD(day, Commentaire, CAST(Factures.Date_de_facture AS DATE)), 'yyyy/MM/dd') AS DATE),
         CAST(Paiements.Date_de_facture AS DATE)
     ) + 1 AS VARCHAR)
-END as Retard_en_mois
+END as [RETARD MOIS]
 FROM (
     SELECT c.CT_Intitule, JO_Num, e.CT_Num as N_Fournisseur,
            FORMAT(DATEADD(day, EC_Jour - 1, JM_Date), 'yyyy/MM/dd') as Date_de_facture,
@@ -180,7 +182,8 @@ FROM (
            CONVERT(INT, CT_Commentaire) as Commentaire, EC_Pointage
     FROM dbo.F_ECRITUREC as e 
     JOIN dbo.F_COMPTET as c on c.CT_Num = e.CT_Num
-    WHERE (JO_Num IN ('AC') AND EC_Sens = 1 )
+    WHERE (JO_Num IN (SELECT JO_Num FROM dbo.F_JOURNAUX
+    WHERE JO_Type = 0) AND EC_Sens = 1)
     AND e.CT_Num NOT LIKE '3%'
     AND e.CT_Num <> 'NULL'
     AND CONVERT(date, JM_Date) BETWEEN '{year_start}' AND '{start_date_minus1}'
@@ -194,8 +197,9 @@ LEFT JOIN (
     FROM dbo.F_ECRITUREC as e
     JOIN dbo.F_COMPTET as c on c.CT_Num = e.CT_Num
     WHERE (JO_Num IN (SELECT JO_Num FROM dbo.F_JOURNAUX
-    WHERE CG_Num like '5%')  
-    OR (JO_num IN ('AC') AND EC_Sens = 0))
+    WHERE CG_Num like '5%')
+    OR (JO_num IN (SELECT JO_Num FROM dbo.F_JOURNAUX
+    WHERE JO_Type = 0) AND EC_Sens = 0))
     AND e.CT_Num NOT LIKE '3%'
     AND e.CT_Num <> 'NULL'
     AND CONVERT(date, JM_Date) BETWEEN '{start_date}' AND '{end_date}'
@@ -218,18 +222,22 @@ WHERE Paiements.Date_de_facture IS NOT NULL
 UNION
 
 -- Past invoices still unpaid
-SELECT  CT_Intitule as Fournisseurs,Factures.EC_Intitule,
-    EC_RefPiece as [N°Facture],
-    Factures.EC_Montant as [Montant de Facture],
-    Paiements.EC_Montant as montant_paiement,
-    Factures.Date_de_facture as [Date de facture],
-
+SELECT  CT_Intitule as FOURNISSEUR,
+    EC_RefPiece as [N° FACTURE],
+    Factures.Date_de_facture as [DATE FACTURE],
+    Factures.EC_Montant as [MONTANT FACTURE],
+    Factures.Mois_de_livraison as [MOIS LIVRAISON],
+    Commentaire as [CONDITION PAIEMENT (JRS)],
+    FORMAT(DATEADD(day, Commentaire, CAST(Factures.Date_de_facture AS DATE)), 'yyyy/MM/dd') as [DATE ECHEANCE],
     CASE 
         WHEN Paiements.EC_Lettrage IS NULL AND Paiements.EC_Pointage IS NULL THEN 'Non réglé' 
         WHEN Paiements.EC_Lettrage IS NOT NULL AND Paiements.EC_Lettrage <>''  THEN 'Totalement réglé' 
         WHEN Paiements.EC_Lettrage IS NULL OR Paiements.EC_Lettrage = '' AND (Paiements.EC_Pointage IS NOT NULL OR Paiements.EC_Pointage <>'' )  THEN 'Partiellement réglé'
-    END AS [Statut de paiement]
+    END AS [STATUT PAIEMENT]
     ,
+    Paiements.Date_de_facture as [DATE PAIEMENT],
+    Paiements.EC_Montant as [MONTANT PAIEMENT],
+
     CASE
         WHEN Paiements.EC_Lettrage IS NULL AND Paiements.EC_Pointage IS NULL THEN NULL
         WHEN Paiements.EC_Lettrage IS NOT NULL 
@@ -237,14 +245,10 @@ SELECT  CT_Intitule as Fournisseurs,Factures.EC_Intitule,
         WHEN (Paiements.EC_Lettrage IS NULL OR Paiements.EC_Lettrage = '')
          AND Paiements.EC_Pointage IS NOT NULL 
          AND Paiements.EC_Pointage <> '' THEN Factures.EC_Montant - Paiements.EC_Montant
-    END AS [Reliquat]
+    END AS [RELIQUAT]
     ,
-    Paiements.Date_de_facture as [Date de paiement],
-    Factures.EC_Pointage as [facture pointage],Paiements.EC_Pointage as [paiement pointage],
-    Factures.Mois_de_livraison as [Mois de livraison],
-    Commentaire as [Condition de paiement en jrs],
-    CASE WHEN jour_paiement - jour_facture < 0 then 'En Avance' Else CAST(jour_paiement - jour_facture as varchar) END as [Délai de paiement en jrs],
-    FORMAT(DATEADD(day, Commentaire, CAST(Factures.Date_de_facture AS DATE)), 'yyyy/MM/dd') as [Date d'échéance],
+    
+    CASE WHEN jour_paiement - jour_facture < 0 then 'En Avance' Else CAST(jour_paiement - jour_facture as varchar) END as [DELAI PAIEMENT (JRS)],
     CASE 
     WHEN Paiements.Date_de_facture IS NULL THEN
         CASE
@@ -256,7 +260,7 @@ SELECT  CT_Intitule as Fournisseurs,Factures.EC_Intitule,
         END
     WHEN CAST(jour_paiement - jour_facture AS INT) - Commentaire <= 0 THEN NULL
     ELSE CAST(CAST(jour_paiement - jour_facture AS INT) - Commentaire AS VARCHAR)
-END as Retard_en_jours,
+END as [RETARD JOURS],
 CASE 
     WHEN Paiements.Date_de_facture IS NULL THEN
         CASE 
@@ -271,7 +275,7 @@ CASE
         CAST(FORMAT(DATEADD(day, Commentaire, CAST(Factures.Date_de_facture AS DATE)), 'yyyy/MM/dd') AS DATE),
         CAST(Paiements.Date_de_facture AS DATE)
     ) + 1 AS VARCHAR)
-END as Retard_en_mois
+END as [RETARD MOIS]
 FROM (
 SELECT c.CT_Intitule ,JO_Num, e.CT_Num as N_Fournisseur,
        FORMAT(DATEADD(day, EC_Jour - 1, JM_Date), 'yyyy/MM/dd')as Date_de_facture,
@@ -281,7 +285,8 @@ SELECT c.CT_Intitule ,JO_Num, e.CT_Num as N_Fournisseur,
         CONVERT(INT, CT_Commentaire) as Commentaire, EC_Pointage
 FROM dbo.F_ECRITUREC as e 
 JOIN dbo.F_COMPTET as c on c.CT_Num = e.CT_Num
-WHERE (JO_Num IN ('AC') AND EC_Sens = 1 )
+WHERE (JO_Num IN (SELECT JO_Num FROM dbo.F_JOURNAUX
+WHERE JO_Type = 0) AND EC_Sens = 1)
 AND e.CT_Num NOT LIKE '3%'
 AND e.CT_Num <> 'NULL'  
 AND CONVERT(date, JM_Date) BETWEEN '{year_start}' AND '{start_date_minus1}'
@@ -292,7 +297,10 @@ LEFT JOIN (SELECT e.CT_Num as N_Fournisseur,
         EC_Lettrage, DATEDIFF(day, '1900-01-01', DATEADD(day, EC_Jour - 1, JM_Date)) as jour_paiement, EC_Pointage
 FROM dbo.F_ECRITUREC as e
 JOIN dbo.F_COMPTET as c on c.CT_Num = e.CT_Num
-WHERE (JO_Num IN (SELECT JO_Num FROM dbo.F_JOURNAUX WHERE CG_Num like '5%') OR (JO_num IN ('AC') AND EC_Sens = 0))  
+WHERE (JO_Num IN (SELECT JO_Num FROM dbo.F_JOURNAUX
+WHERE CG_Num like '5%')
+OR (JO_num IN (SELECT JO_Num FROM dbo.F_JOURNAUX
+WHERE JO_Type = 0) AND EC_Sens = 0))
 AND e.CT_Num NOT LIKE '3%'
 AND e.CT_Num <> 'NULL' 
 AND CONVERT(date, JM_Date) BETWEEN '{year_start}' AND '{end_date}'
@@ -315,18 +323,22 @@ WHERE Paiements.Date_de_facture IS NULL
 UNION
 
 -- PAID RN in choosen trimester
-SELECT  CT_Intitule as Fournisseurs,Factures.EC_Intitule,
-    EC_RefPiece as [N°Facture],
-    Factures.EC_Montant as [Montant de Facture],
-    Paiements.EC_Montant as montant_paiement,
-    Factures.Date_de_facture as [Date de facture],
-
+SELECT  CT_Intitule as FOURNISSEUR,
+    EC_RefPiece as [N° FACTURE],
+    Factures.Date_de_facture as [DATE FACTURE],
+    Factures.EC_Montant as [MONTANT FACTURE],
+    Factures.Mois_de_livraison as [MOIS LIVRAISON],
+    Commentaire as [CONDITION PAIEMENT (JRS)],
+    FORMAT(DATEADD(day, Commentaire, CAST(Factures.Date_de_facture AS DATE)), 'yyyy/MM/dd') as [DATE ECHEANCE],
     CASE 
         WHEN Paiements.EC_Lettrage IS NULL AND Paiements.EC_Pointage IS NULL THEN 'Non réglé' 
         WHEN Paiements.EC_Lettrage IS NOT NULL AND Paiements.EC_Lettrage <>''  THEN 'Totalement réglé' 
         WHEN Paiements.EC_Lettrage IS NULL OR Paiements.EC_Lettrage = '' AND (Paiements.EC_Pointage IS NOT NULL OR Paiements.EC_Pointage <>'' )  THEN 'Partiellement réglé'
-    END AS [Statut de paiement]
+    END AS [STATUT PAIEMENT]
     ,
+    Paiements.Date_de_facture as [DATE PAIEMENT],
+    Paiements.EC_Montant as [MONTANT PAIEMENT],
+
     CASE
         WHEN Paiements.EC_Lettrage IS NULL AND Paiements.EC_Pointage IS NULL THEN NULL
         WHEN Paiements.EC_Lettrage IS NOT NULL 
@@ -334,14 +346,10 @@ SELECT  CT_Intitule as Fournisseurs,Factures.EC_Intitule,
         WHEN (Paiements.EC_Lettrage IS NULL OR Paiements.EC_Lettrage = '')
          AND Paiements.EC_Pointage IS NOT NULL 
          AND Paiements.EC_Pointage <> '' THEN Factures.EC_Montant - Paiements.EC_Montant
-    END AS [Reliquat]
+    END AS [RELIQUAT]
     ,
-    Paiements.Date_de_facture as [Date de paiement],
-    Factures.EC_Pointage as [facture pointage],Paiements.EC_Pointage as [paiement pointage],
-    Factures.Mois_de_livraison as [Mois de livraison],
-    Commentaire as [Condition de paiement en jrs],
-    CASE WHEN jour_paiement - jour_facture < 0 then 'En Avance' Else CAST(jour_paiement - jour_facture as varchar) END as [Délai de paiement en jrs],
-    FORMAT(DATEADD(day, Commentaire, CAST(Factures.Date_de_facture AS DATE)), 'yyyy/MM/dd') as [Date d'échéance],
+    
+    CASE WHEN jour_paiement - jour_facture < 0 then 'En Avance' Else CAST(jour_paiement - jour_facture as varchar) END as [DELAI PAIEMENT (JRS)],
     CASE 
     WHEN Paiements.Date_de_facture IS NULL THEN
         CASE
@@ -353,7 +361,7 @@ SELECT  CT_Intitule as Fournisseurs,Factures.EC_Intitule,
         END
     WHEN CAST(jour_paiement - jour_facture AS INT) - Commentaire <= 0 THEN NULL
     ELSE CAST(CAST(jour_paiement - jour_facture AS INT) - Commentaire AS VARCHAR)
-END as Retard_en_jours,
+END as [RETARD JOURS],
 CASE 
     WHEN Paiements.Date_de_facture IS NULL THEN
         CASE 
@@ -368,7 +376,7 @@ CASE
         CAST(FORMAT(DATEADD(day, Commentaire, CAST(Factures.Date_de_facture AS DATE)), 'yyyy/MM/dd') AS DATE),
         CAST(Paiements.Date_de_facture AS DATE)
     ) + 1 AS VARCHAR)
-END as Retard_en_mois
+END as [RETARD MOIS]
 FROM (
     SELECT c.CT_Intitule, AC.JO_Num, AC.CT_Num as N_Fournisseur,
        FORMAT(DATEADD(day, EC_Jour - 1, AC.JM_Date), 'yyyy/MM/dd') as Date_de_facture,
@@ -381,13 +389,14 @@ JOIN dbo.F_COMPTET as c on c.CT_Num = AC.CT_Num
 JOIN (
     SELECT CT_Num, EC_RefPiece, EC_Lettrage
     FROM dbo.F_ECRITUREC
-    WHERE JO_Num = 'RN'
+    WHERE JO_Num IN ('RN', 'AN','RA')
     AND CONVERT(date, JM_Date) = '{year_start}'
     AND CT_Num <> 'NULL'
     AND CT_Num NOT LIKE '3%'
     AND EC_RefPiece <> ''
 ) as RN ON AC.CT_Num = RN.CT_Num AND AC.EC_RefPiece = RN.EC_RefPiece
-WHERE (JO_Num IN ('AC') AND EC_Sens = 1 )
+WHERE (JO_Num IN (SELECT JO_Num FROM dbo.F_JOURNAUX
+WHERE JO_Type = 0) AND EC_Sens = 1)
 AND AC.CT_Num NOT LIKE '3%'
 AND AC.CT_Num <> 'NULL'
 AND CONVERT(date, AC.JM_Date) > CONVERT(date , (select TOP 1 D_commentaire FROm dbo.P_DOSSIER))
@@ -400,9 +409,10 @@ LEFT JOIN (
            DATEDIFF(day, '1900-01-01', DATEADD(day, EC_Jour - 1, JM_Date)) as jour_paiement, EC_Pointage
     FROM dbo.F_ECRITUREC as e
     JOIN dbo.F_COMPTET as c on c.CT_Num = e.CT_Num
-    WHERE (JO_Num IN (SELECT JO_Num FROM dbo.F_JOURNAUX
-    WHERE CG_Num like '5%')  
-    OR (JO_num IN ('AC') AND EC_Sens = 0)) 
+WHERE (JO_Num IN (SELECT JO_Num FROM dbo.F_JOURNAUX
+WHERE CG_Num like '5%')
+OR (JO_num IN (SELECT JO_Num FROM dbo.F_JOURNAUX
+WHERE JO_Type = 0) AND EC_Sens = 0))
     AND e.CT_Num NOT LIKE '3%'
     AND e.CT_Num <> 'NULL'
     AND CONVERT(date, JM_Date) BETWEEN '{start_date}' AND '{end_date}'
@@ -425,18 +435,22 @@ WHERE Paiements.Date_de_facture IS NOT NULL
 UNION
 
 -- RN still unpaid
-SELECT  CT_Intitule as Fournisseurs,Factures.EC_Intitule,
-    EC_RefPiece as [N°Facture],
-    Factures.EC_Montant as [Montant de Facture],
-    Paiements.EC_Montant as montant_paiement,
-    Factures.Date_de_facture as [Date de facture],
-
+SELECT  CT_Intitule as FOURNISSEUR,
+    EC_RefPiece as [N° FACTURE],
+    Factures.Date_de_facture as [DATE FACTURE],
+    Factures.EC_Montant as [MONTANT FACTURE],
+    Factures.Mois_de_livraison as [MOIS LIVRAISON],
+    Commentaire as [CONDITION PAIEMENT (JRS)],
+    FORMAT(DATEADD(day, Commentaire, CAST(Factures.Date_de_facture AS DATE)), 'yyyy/MM/dd') as [DATE ECHEANCE],
     CASE 
         WHEN Paiements.EC_Lettrage IS NULL AND Paiements.EC_Pointage IS NULL THEN 'Non réglé' 
         WHEN Paiements.EC_Lettrage IS NOT NULL AND Paiements.EC_Lettrage <>''  THEN 'Totalement réglé' 
         WHEN Paiements.EC_Lettrage IS NULL OR Paiements.EC_Lettrage = '' AND (Paiements.EC_Pointage IS NOT NULL OR Paiements.EC_Pointage <>'' )  THEN 'Partiellement réglé'
-    END AS [Statut de paiement]
+    END AS [STATUT PAIEMENT]
     ,
+    Paiements.Date_de_facture as [DATE PAIEMENT],
+    Paiements.EC_Montant as [MONTANT PAIEMENT],
+
     CASE
         WHEN Paiements.EC_Lettrage IS NULL AND Paiements.EC_Pointage IS NULL THEN NULL
         WHEN Paiements.EC_Lettrage IS NOT NULL 
@@ -444,14 +458,10 @@ SELECT  CT_Intitule as Fournisseurs,Factures.EC_Intitule,
         WHEN (Paiements.EC_Lettrage IS NULL OR Paiements.EC_Lettrage = '')
          AND Paiements.EC_Pointage IS NOT NULL 
          AND Paiements.EC_Pointage <> '' THEN Factures.EC_Montant - Paiements.EC_Montant
-    END AS [Reliquat]
+    END AS [RELIQUAT]
     ,
-    Paiements.Date_de_facture as [Date de paiement],
-    Factures.EC_Pointage as [facture pointage],Paiements.EC_Pointage as [paiement pointage],
-    Factures.Mois_de_livraison as [Mois de livraison],
-    Commentaire as [Condition de paiement en jrs],
-    CASE WHEN jour_paiement - jour_facture < 0 then 'En Avance' Else CAST(jour_paiement - jour_facture as varchar) END as [Délai de paiement en jrs],
-    FORMAT(DATEADD(day, Commentaire, CAST(Factures.Date_de_facture AS DATE)), 'yyyy/MM/dd') as [Date d'échéance],
+    
+    CASE WHEN jour_paiement - jour_facture < 0 then 'En Avance' Else CAST(jour_paiement - jour_facture as varchar) END as [DELAI PAIEMENT (JRS)],
     CASE 
     WHEN Paiements.Date_de_facture IS NULL THEN
         CASE
@@ -463,7 +473,7 @@ SELECT  CT_Intitule as Fournisseurs,Factures.EC_Intitule,
         END
     WHEN CAST(jour_paiement - jour_facture AS INT) - Commentaire <= 0 THEN NULL
     ELSE CAST(CAST(jour_paiement - jour_facture AS INT) - Commentaire AS VARCHAR)
-END as Retard_en_jours,
+END as [RETARD JOURS],
 CASE 
     WHEN Paiements.Date_de_facture IS NULL THEN
         CASE 
@@ -478,7 +488,7 @@ CASE
         CAST(FORMAT(DATEADD(day, Commentaire, CAST(Factures.Date_de_facture AS DATE)), 'yyyy/MM/dd') AS DATE),
         CAST(Paiements.Date_de_facture AS DATE)
     ) + 1 AS VARCHAR)
-END as Retard_en_mois
+END as [RETARD MOIS]
 FROM (
 SELECT c.CT_Intitule, AC.JO_Num, AC.CT_Num as N_Fournisseur,
        FORMAT(DATEADD(day, EC_Jour - 1, AC.JM_Date), 'yyyy/MM/dd') as Date_de_facture,
@@ -491,13 +501,14 @@ JOIN dbo.F_COMPTET as c on c.CT_Num = AC.CT_Num
 JOIN (
     SELECT CT_Num, EC_RefPiece, EC_Lettrage
     FROM dbo.F_ECRITUREC
-    WHERE JO_Num = 'RN'
+    WHERE JO_Num IN ('RN', 'AN','RA')
     AND CONVERT(date, JM_Date) = '{year_start}'
     AND CT_Num <> 'NULL'
     AND CT_Num NOT LIKE '3%'
     AND EC_RefPiece <> ''
 ) as RN ON AC.CT_Num = RN.CT_Num AND AC.EC_RefPiece = RN.EC_RefPiece
-WHERE (JO_Num IN ('AC') AND EC_Sens = 1 )
+WHERE (JO_Num IN (SELECT JO_Num FROM dbo.F_JOURNAUX
+WHERE JO_Type = 0) AND EC_Sens = 1)
 AND AC.CT_Num NOT LIKE '3%'
 AND AC.CT_Num <> 'NULL'
 AND CONVERT(date, AC.JM_Date) > CONVERT(date, (select TOP 1 D_commentaire FROm dbo.P_DOSSIER))
@@ -508,7 +519,10 @@ LEFT JOIN (SELECT e.CT_Num as N_Fournisseur,
         EC_Lettrage, DATEDIFF(day, '1900-01-01', DATEADD(day, EC_Jour - 1, JM_Date)) as jour_paiement, EC_Pointage
 FROM dbo.F_ECRITUREC as e
 JOIN dbo.F_COMPTET as c on c.CT_Num = e.CT_Num
-WHERE (JO_Num IN (SELECT JO_Num FROM dbo.F_JOURNAUX WHERE CG_Num like '5%') OR (JO_num IN ('AC') AND EC_Sens = 0))  
+WHERE (JO_Num IN (SELECT JO_Num FROM dbo.F_JOURNAUX
+WHERE CG_Num like '5%')
+OR (JO_num IN (SELECT JO_Num FROM dbo.F_JOURNAUX
+WHERE JO_Type = 0) AND EC_Sens = 0))
 AND e.CT_Num NOT LIKE '3%'
 AND e.CT_Num <> 'NULL' 
 AND CONVERT(date, JM_Date) BETWEEN '{year_start}' AND '{end_date}' ) as Paiements
@@ -528,8 +542,7 @@ AND (
 WHERE Paiements.Date_de_facture IS NULL
 
 ) as full_report
-ORDER BY Fournisseurs asc"""
-        
+ORDER BY FOURNISSEUR asc"""
         data = pd.read_sql(query, conn)
         return data
     except Exception as e:
