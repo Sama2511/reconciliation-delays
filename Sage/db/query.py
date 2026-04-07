@@ -544,6 +544,7 @@ WHERE Paiements.Date_de_facture IS NULL
 ) as full_report
 ORDER BY FOURNISSEUR asc"""
         data = pd.read_sql(query, conn)
+        print(query)
         return data
     except Exception as e:
         print(f"Query error: {e}")
