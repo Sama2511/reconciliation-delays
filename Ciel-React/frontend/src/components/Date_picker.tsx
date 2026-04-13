@@ -33,7 +33,7 @@ export function DatePickerInput({
           <Button
             variant="outline"
             data-empty={!date}
-            className="w-[212px] justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
+            className="w-53 justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
           >
             {date ? (
               format(date, "PPP", { locale: fr })

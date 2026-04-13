@@ -10,9 +10,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type Config from "@/lib/types";
-import { PlusIcon, XIcon } from "lucide-react";
+import { Check, PlusIcon, X, XIcon } from "lucide-react";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { Input } from "./ui/input";
 
 interface DialogModifyProps {
   config: Config | undefined;
@@ -21,11 +22,22 @@ interface DialogModifyProps {
 
 export function DialogModify({ config, setRefreshConfig }: DialogModifyProps) {
   const [localConfig, setLocalConfig] = useState(config);
-
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [inputValue, setInputValue] = useState("");
+  const [open, setOpen] = useState(false);
+  function handleOpenChange(isOpen: boolean) {
+    if (!isOpen) {
+      setInputValue("");
+      setActiveSection(null);
+      setLocalConfig(config);
+    }
+    setOpen(isOpen);
+  }
   async function save() {
-    // setRefreshConfig((prev) => prev + 1);
-    // await window.pywebview.api.save_config(localConfig);
-    console.log(localConfig);
+    await window.pywebview.api.save_config(localConfig);
+    setRefreshConfig((prev) => prev + 1);
+    setOpen(false);
+    console.log("reach set open");
   }
 
   function deleteCode(code: string) {
@@ -52,9 +64,11 @@ export function DialogModify({ config, setRefreshConfig }: DialogModifyProps) {
       }
     });
     setLocalConfig(Object.fromEntries(clean_config));
+    setInputValue("");
+    setActiveSection(null);
   }
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" className="cursor-pointer">
           Modifier
@@ -96,20 +110,59 @@ export function DialogModify({ config, setRefreshConfig }: DialogModifyProps) {
                   <Button
                     variant="secondary"
                     key={code}
-                    className="flex items-center gap-1 rounded border px-2 py-0.5 text-sm hover:bg-destructive"
+                    className="flex items-center gap-1 rounded border px-2 py-0.5 text-sm hover:bg-destructive bg-accent cursor-pointer"
                     onClick={() => deleteCode(code)}
                   >
                     {code}
                     <XIcon className="h-3 w-3 cursor-pointer text-muted-foreground" />
                   </Button>
                 ))}
-                <Button
-                  variant="ghost"
-                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground border border-foreground border-dashed"
-                >
-                  <PlusIcon className="h-3.5 w-3.5" />
-                  Ajouter
-                </Button>
+                {activeSection == section.configKey ? (
+                  <div className="flex items-center gap-1">
+                    <Input
+                      autoFocus
+                      placeholder="Code"
+                      className="h-7 w-16 px-2 text-sm uppercase border border-border bg-muted"
+                      value={inputValue}
+                      onChange={(event) => setInputValue(event?.target.value)}
+                    />
+                    {inputValue && (
+                      <>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-50 cursor-pointer"
+                          onClick={() => addCode(section.configKey, inputValue)}
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                          onClick={() => {
+                            setInputValue("");
+                            setActiveSection(null);
+                          }}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground border border-foreground border-dashed cursor-pointer"
+                    onClick={() => {
+                      setInputValue("");
+                      setActiveSection(section.configKey);
+                    }}
+                  >
+                    <PlusIcon className="h-3.5 w-3.5" />
+                    Ajouter
+                  </Button>
+                )}
               </div>
             </div>
           ))}
@@ -117,9 +170,24 @@ export function DialogModify({ config, setRefreshConfig }: DialogModifyProps) {
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline">Annuler</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setInputValue("");
+                setActiveSection(null);
+                setLocalConfig(config);
+              }}
+            >
+              Annuler
+            </Button>
           </DialogClose>
-          <Button onClick={() => save()}>Sauvegarder</Button>
+          <Button
+            onClick={() => {
+              save();
+            }}
+          >
+            Sauvegarder
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

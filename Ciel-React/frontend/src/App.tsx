@@ -23,8 +23,6 @@ function App() {
         setPaiements(config.journal_paiements);
         setReports(config.journal_report);
         setConfiguration(config);
-        console.log(config);
-        console.log(refreshConfig);
       } catch (err) {
         console.error("PyWebView call failed:", err);
       }
@@ -40,7 +38,7 @@ function App() {
     return () => {
       window.removeEventListener("pywebviewready", handleReady);
     };
-  }, []);
+  }, [refreshConfig]);
 
   return (
     <div className="bg-background h-screen p-5 flex justify-center ">
