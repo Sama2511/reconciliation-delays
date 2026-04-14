@@ -5,7 +5,7 @@ export default interface Config {
   journal_paiements: string[];
   journal_report: string[];
   condition_default: number;
-  conditions_fournisseur: string[];
+  conditions_fournisseur: { num: string; name: string; days: number }[];
   fournisseurs_exclus: { num: string; name: string }[];
 }
 

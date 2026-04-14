@@ -5,6 +5,7 @@ import { DialogModify } from "./components/Modify";
 import { ExcelUpload } from "./components/ExcelUpload";
 import type Config from "./lib/types";
 import { SupplierExcluded } from "./components/SupplierExcluded";
+import { PayementCondition } from "./components/PayementCondition";
 
 function App() {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
@@ -118,10 +119,16 @@ function App() {
           setCurrentYearFile={setCurrentYearFile}
           setPastYearFile={setPastYearFile}
         />
-        <SupplierExcluded
-          config={configuration}
-          setRefreshConfig={setRefreshConfig}
-        />
+        <div className="flex gap-5">
+          <SupplierExcluded
+            config={configuration}
+            setRefreshConfig={setRefreshConfig}
+          />
+          <PayementCondition
+            config={configuration}
+            setRefreshConfig={setRefreshConfig}
+          />
+        </div>
       </div>
     </div>
   );
