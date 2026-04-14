@@ -4,6 +4,7 @@ import { DatePickerInput } from "./components/Date_picker";
 import { DialogModify } from "./components/Modify";
 import { ExcelUpload } from "./components/ExcelUpload";
 import type Config from "./lib/types";
+import { SupplierExcluded } from "./components/SupplierExcluded";
 
 function App() {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
@@ -14,6 +15,9 @@ function App() {
   const [configuration, setConfiguration] = useState<Config | undefined>(
     undefined,
   );
+  const [currentYearFile, setCurrentYearFile] = useState<File | null>(null);
+  const [pastYearFile, setPastYearFile] = useState<File | null>(null);
+
   const [refreshConfig, setRefreshConfig] = useState(0);
 
   useEffect(() => {
@@ -108,7 +112,16 @@ function App() {
             </CardContent>
           </Card>
         </div>
-        <ExcelUpload />
+        <ExcelUpload
+          currentYearFile={currentYearFile}
+          pastYearFile={pastYearFile}
+          setCurrentYearFile={setCurrentYearFile}
+          setPastYearFile={setPastYearFile}
+        />
+        <SupplierExcluded
+          config={configuration}
+          setRefreshConfig={setRefreshConfig}
+        />
       </div>
     </div>
   );

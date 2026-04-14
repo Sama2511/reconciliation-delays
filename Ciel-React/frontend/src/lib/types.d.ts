@@ -6,7 +6,7 @@ export default interface Config {
   journal_report: string[];
   condition_default: number;
   conditions_fournisseur: string[];
-  fournisseurs_exclus: string[];
+  fournisseurs_exclus: { num: string; name: string }[];
 }
 
 declare global {
