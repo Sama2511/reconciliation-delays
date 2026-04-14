@@ -1,12 +1,21 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useState, type ChangeEvent } from "react";
+import { type ChangeEvent } from "react";
 import { Button } from "./ui/button";
 import { X } from "lucide-react";
 
-export function ExcelUpload() {
-  const [currentYearFile, setCurrentYearFile] = useState<File | null>(null);
-  const [pastYearFile, setPastYearFile] = useState<File | null>(null);
+interface excelUploadProps {
+  currentYearFile: File | null;
+  pastYearFile: File | null;
+  setCurrentYearFile: React.Dispatch<React.SetStateAction<File | null>>;
+  setPastYearFile: React.Dispatch<React.SetStateAction<File | null>>;
+}
 
+export function ExcelUpload({
+  currentYearFile,
+  pastYearFile,
+  setCurrentYearFile,
+  setPastYearFile,
+}: excelUploadProps) {
   function handleUploadCurrentYear(e: ChangeEvent<HTMLInputElement>) {
     if (e.target.files && e.target.files.length > 0) {
       setCurrentYearFile(e.target.files[0]);
