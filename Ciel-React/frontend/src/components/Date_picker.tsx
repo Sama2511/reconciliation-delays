@@ -17,12 +17,14 @@ interface DatePickerInputProps {
   date: Date | undefined;
   onDateChange: (date: Date | undefined) => void;
   label: string;
+  hasError: boolean;
 }
 
 export function DatePickerInput({
   date,
   onDateChange,
   label,
+  hasError,
 }: DatePickerInputProps) {
   const [open, setOpen] = useState(false);
   return (
@@ -33,7 +35,7 @@ export function DatePickerInput({
           <Button
             variant="outline"
             data-empty={!date}
-            className="w-53 justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
+            className={`w-53 justify-between text-left font-normal data-[empty=true]:text-muted-foreground ${hasError ? "border-red-500" : ""}`}
           >
             {date ? (
               format(date, "PPP", { locale: fr })

@@ -51,7 +51,7 @@ export function SupplierExcluded({
   }
 
   return (
-    <Card className="pt-2 gap-0 max-w-110 pb-2">
+    <Card className="pt-2 gap-0 w-110 min-w-110 pb-2">
       <CardHeader className="border-b font-bold text-lg py-2! px-4! ">
         <div className="flex justify-between items-center">
           Fournisseurs exclus
@@ -70,16 +70,16 @@ export function SupplierExcluded({
         <span>FOURNISSEUR</span>
         <span />
       </div>
-      <CardContent className="p-0! overflow-y-auto max-h-30">
+      <CardContent className="p-0! overflow-y-auto h-30 max-h-30">
         {config?.fournisseurs_exclus.length === 0 && !isAdding && (
-          <p className="px-4 py-4 text-sm text-muted-foreground flex justify-center">
+          <p className=" h-full px-4 py-4 text-sm text-muted-foreground flex justify-center items-center">
             Aucun fournisseur exclu
           </p>
         )}
         {config?.fournisseurs_exclus.map((supplier, i) => (
           <div
             key={supplier.num}
-            className={`grid grid-cols-[1fr_2fr_auto]  items-center px-4 py-3 ${i < config.fournisseurs_exclus.length - 1 ? "border-b" : ""}`}
+            className={`grid grid-cols-[1fr_2fr_auto]  items-center px-4 py-3 ${i < config.fournisseurs_exclus.length - 1 ? "border-b border-muted" : ""}`}
           >
             <span className="text-sm text-muted-foreground">
               {supplier.num}

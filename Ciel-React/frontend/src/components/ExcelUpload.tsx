@@ -1,13 +1,14 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { type ChangeEvent } from "react";
 import { Button } from "./ui/button";
 import { X } from "lucide-react";
 
 interface excelUploadProps {
-  currentYearFile: File | null;
-  pastYearFile: File | null;
-  setCurrentYearFile: React.Dispatch<React.SetStateAction<File | null>>;
-  setPastYearFile: React.Dispatch<React.SetStateAction<File | null>>;
+  currentYearFile: string | null;
+  pastYearFile: string | null;
+  setCurrentYearFile: (file: string | null) => void;
+  setPastYearFile: (file: string | null) => void;
+  hasCurrentFileError: boolean;
+  hasPastFileError: boolean;
 }
 
 export function ExcelUpload({
@@ -15,17 +16,19 @@ export function ExcelUpload({
   pastYearFile,
   setCurrentYearFile,
   setPastYearFile,
+  hasCurrentFileError,
+  hasPastFileError,
 }: excelUploadProps) {
-  function handleUploadCurrentYear(e: ChangeEvent<HTMLInputElement>) {
-    if (e.target.files && e.target.files.length > 0) {
-      setCurrentYearFile(e.target.files[0]);
-    }
+  async function handlePickCurrentYear() {
+    const path = await window.pywebview.api.pick_current_year_file();
+    if (path) setCurrentYearFile(path);
   }
-  function handleUploadPastYear(e: ChangeEvent<HTMLInputElement>) {
-    if (e.target.files && e.target.files.length > 0) {
-      setPastYearFile(e.target.files[0]);
-    }
+
+  async function handlePickPastYear() {
+    const path = await window.pywebview.api.pick_past_year_file();
+    if (path) setPastYearFile(path);
   }
+
   return (
     <Card className="pt-2 gap-2 mt-4">
       <CardHeader className="border-b font-bold text-lg py-2! px-4!">
@@ -38,11 +41,9 @@ export function ExcelUpload({
             <div className="flex items-center gap-3 border border-green-200 bg-green-50 px-4 h-27">
               <div className="flex flex-col flex-1 min-w-0">
                 <span className="font-semibold text-green-800 text-[16px] truncate">
-                  {currentYearFile.name}
+                  {currentYearFile.split("\\").pop()}
                 </span>
-                <span className="text-[12px] text-green-600">
-                  {(currentYearFile.size / 1024).toFixed(0)} KB · Excel
-                </span>
+                <span className="text-[12px] text-green-600">Excel</span>
               </div>
               <Button
                 variant="ghost"
@@ -54,23 +55,17 @@ export function ExcelUpload({
               </Button>
             </div>
           ) : (
-            <div className="flex items-center justify-center border border-dashed h-27 text-muted-foreground text-sm flex-col gap-1">
-              <label
-                htmlFor="filePicker"
-                className="w-full bg-secondary flex flex-col justify-center items-center h-full cursor-pointer "
-              >
+            <div
+              className={`flex items-center justify-center border border-dashed h-27 text-muted-foreground text-sm flex-col gap-1 ${hasCurrentFileError ? "border-red-600" : ""}`}
+              onClick={handlePickCurrentYear}
+            >
+              <div className="w-full bg-secondary flex flex-col justify-center items-center h-full cursor-pointer">
                 <span className="text-3xl">📂</span>
                 <h1 className="font-semibold text-[16px]">
                   Clicker pour importer
                 </h1>
                 <p>Grand livre N (.xlsx)</p>
-              </label>
-              <input
-                id="filePicker"
-                className="hidden"
-                type={"file"}
-                onChange={handleUploadCurrentYear}
-              />
+              </div>
             </div>
           )}
         </div>
@@ -82,11 +77,9 @@ export function ExcelUpload({
             <div className="flex items-center gap-3 border border-green-200 bg-green-50 px-4 h-27">
               <div className="flex flex-col flex-1 min-w-0">
                 <span className="font-semibold text-green-800 text-[16px] truncate">
-                  {pastYearFile.name}
+                  {pastYearFile.split("\\").pop()}
                 </span>
-                <span className="text-[12px] text-green-600">
-                  {(pastYearFile.size / 1024).toFixed(0)} KB · Excel
-                </span>
+                <span className="text-[12px] text-green-600">Excel</span>
               </div>
               <Button
                 variant="ghost"
@@ -98,23 +91,17 @@ export function ExcelUpload({
               </Button>
             </div>
           ) : (
-            <div className="flex items-center justify-center border border-dashed h-27 text-muted-foreground text-sm flex-col gap-1">
-              <label
-                htmlFor="filePicker2"
-                className="w-full bg-secondary flex flex-col justify-center items-center h-full cursor-pointer "
-              >
+            <div
+              className={`flex items-center justify-center border border-dashed h-27 text-muted-foreground text-sm flex-col gap-1 ${hasPastFileError ? "border-red-600" : ""}`}
+              onClick={handlePickPastYear}
+            >
+              <div className="w-full bg-secondary flex flex-col justify-center items-center h-full cursor-pointer">
                 <span className="text-3xl">📂</span>
                 <h1 className="font-semibold text-[16px]">
                   Clicker pour importer
                 </h1>
                 <p>Grand livre N-1 (.xlsx)</p>
-              </label>
-              <input
-                id="filePicker2"
-                className="hidden"
-                type={"file"}
-                onChange={handleUploadPastYear}
-              />
+              </div>
             </div>
           )}
         </div>

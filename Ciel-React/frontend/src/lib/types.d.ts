@@ -14,7 +14,16 @@ declare global {
     pywebview: {
       api: {
         load_config: () => Promise<Config>;
-        save_config: (config) => Promise<config>;
+        save_config: (config) => Promise<Config>;
+        generate_report: (
+          currentYearFile: string,
+          pastYearFile: string,
+          excludedSuppliers: string[],
+          start: string,
+          endDate: string,
+        ) => Promise<void>;
+        pick_current_year_file: () => Promise<string | null>;
+        pick_past_year_file: () => Promise<string | null>;
       };
     };
   }

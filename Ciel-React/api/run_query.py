@@ -1,13 +1,14 @@
 import datetime
 import pandas as pd
 import os 
-from queries import query_1, query_2, query_3, query_4, query_5
-from data_clean import clean_excel
+from api.queries import query_1, query_2, query_3, query_4, query_5
+from api.data_clean import clean_excel
 
 
 
 
 def month_delay(due_date, payment_date, end_date):
+
     if pd.notna(payment_date):
         return ((payment_date.year - due_date.year)*12 + (payment_date.month - due_date.month) + 1)
     else:
@@ -15,9 +16,9 @@ def month_delay(due_date, payment_date, end_date):
     
 
 
-def run_query(current_year_file, past_year_files, excluded_suppliers, start, end_date, output_path='full_report_Q4.xlsx'):
-    start_str = datetime.datetime.strftime(start, '%Y-%m-%d')
-    start_date = datetime.datetime.strptime(start_str, '%Y-%m-%d').date() 
+def run_query(current_year_file, past_year_files, excluded_suppliers, start, end_date, output_path):
+    start_date = datetime.datetime.strptime(start, '%Y-%m-%d').date()
+    end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d').date()
     start_year = datetime.date(start_date.year, 1, 1)
     df_clean, df_clean_past = clean_excel(current_year_file, past_year_files, excluded_suppliers)
 
