@@ -21,7 +21,7 @@ declare global {
           excludedSuppliers: string[],
           start: string,
           endDate: string,
-        ) => Promise<void>;
+        ) => Promise<boolean>;
         pick_current_year_file: () => Promise<string | null>;
         pick_past_year_file: () => Promise<string | null>;
       };

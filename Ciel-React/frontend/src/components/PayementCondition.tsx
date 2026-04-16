@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type Config from "@/lib/types";
-import { CheckIcon, PlusIcon, XIcon } from "lucide-react";
+import { CheckIcon, PlusIcon, Trash2, XIcon } from "lucide-react";
 import { useState } from "react";
 
 interface PayementConditionProps {
@@ -70,19 +70,19 @@ export function PayementCondition({
 
   return (
     <Card className="pt-2 gap-0 w-130 pb-2">
-      <CardHeader className="border-b font-bold text-lg py-2! px-4!">
-        <div className="flex justify-between items-center">
+      <CardHeader className=" font-bold  text-lg py-2! px-4!">
+        <div className="flex justify-between font-medium items-center">
           Conditions de paiement
           <div className="flex items-center gap-2">
             <span className="text-sm font-normal text-muted-foreground">
               Défaut
             </span>
-            <span className="border rounded px-2 py-0.5 text-sm font-semibold">
+            <span className="border  px-2 py-0.5 text-sm font-semibold bg-accent mr-8">
               {config?.condition_default} jours
             </span>
             <Button
               variant="outline"
-              className="cursor-pointer"
+              className="cursor-pointer  bg-gray-100 shadow-lg"
               onClick={() => setIsAdding(true)}
             >
               <PlusIcon className="h-3.5 w-3.5" />
@@ -91,10 +91,10 @@ export function PayementCondition({
           </div>
         </div>
       </CardHeader>
-      <div className="grid grid-cols-[1fr_2fr_1fr_auto] text-xs font-semibold text-muted-foreground tracking-widest px-4 py-2.5 bg-muted border-b">
+      <div className="grid grid-cols-[1fr_2fr_1fr_auto] text-xs font-semibold text-muted-foreground tracking-widest px-4 py-2.5 bg-muted ">
         <span>N° COMPTE</span>
         <span>FOURNISSEUR</span>
-        <span>CONDITION</span>
+        <span className="-ml-3">CONDITION</span>
         <span />
       </div>
       <CardContent className="p-0! overflow-y-auto h-34">
@@ -103,28 +103,32 @@ export function PayementCondition({
             Aucune condition spécifique
           </p>
         )}
-        {config?.conditions_fournisseur.map((condition, i) => (
+        {config?.conditions_fournisseur.map((condition) => (
           <div
             key={condition.num}
-            className={`grid grid-cols-[1fr_2fr_1fr_auto] items-center px-4 py-3 ${i < config.conditions_fournisseur.length - 1 ? "border-b border-muted" : ""}`}
+            className={`grid grid-cols-[1fr_2fr_1fr_auto] border-b border-secondary`}
           >
-            <span className="text-sm text-muted-foreground">
+            <div className="flex items-center px-4 py-2 ml-1 border-r border-muted text-sm text-muted-foreground">
               {condition.num}
-            </span>
-            <span className="text-sm font-semibold">{condition.name}</span>
-            <span className="text-sm font-semibold">
+            </div>
+            <div className="flex items-center px-4 py-2 ml-2 border-r border-muted text-sm">
+              {condition.name}
+            </div>
+            <div className="flex items-center px-4 py-2 ml-1 text-sm">
               {condition.days} jours
-            </span>
-            <button
-              className="text-muted-foreground hover:text-destructive cursor-pointer"
-              onClick={() => deleteCondition(condition.num)}
-            >
-              <XIcon className="h-3.5 w-3.5" />
-            </button>
+            </div>
+            <div className="flex items-center px-4 py-2">
+              <button
+                className="text-muted-foreground hover:text-destructive cursor-pointer"
+                onClick={() => deleteCondition(condition.num)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         ))}
         {isAdding && (
-          <div className="grid grid-cols-[1fr_2fr_1fr_auto] items-center px-4 py-2 border-t gap-2">
+          <div className="grid grid-cols-[1fr_2fr_1fr_auto] items-center px-4 py-2 border-t border-secondary gap-2">
             <input
               autoFocus
               placeholder="N° compte"
@@ -137,7 +141,7 @@ export function PayementCondition({
               }}
             />
             <input
-              placeholder="Nom fournisseur"
+              placeholder="Nom fournisseur (optionnel)"
               className="h-7 px-2 text-sm border border-border bg-muted w-full"
               maxLength={25}
               value={nameInput}

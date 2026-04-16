@@ -76,33 +76,60 @@ function App() {
       paiements.length === 0 ||
       reports.length === 0
     ) {
-      return false;
-    }
-    return true;
-  }
-  async function generateReport() {
-    if (!validate()) {
       toast.error(
         "Veuillez remplir tous les champs obligatoires avant de générer le rapport.",
         { position: "top-center" },
       );
-
+      return false;
+    }
+    if (startDate && endDate && startDate > endDate) {
+      toast.error("La date de début doit être antérieure à la date de fin", {
+        position: "top-center",
+      });
+      setHasStartDateError(true);
+      setHasEndDateError(true);
+      return false;
+    }
+    return true;
+  }
+  function reset() {
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setCurrentYearFile(null);
+    setPastYearFile(null);
+    setHasCurrentFileError(false);
+    setHasPastFileError(false);
+    setHasStartDateError(false);
+    setHasEndDateError(false);
+  }
+  async function generateReport() {
+    if (!validate()) {
       return;
     }
-    await window.pywebview.api.generate_report(
-      currentYearFile!,
-      pastYearFile!,
-      configuration?.fournisseurs_exclus.map((s) => s.num) ?? [],
-      format(startDate!, "yyyy-MM-dd"),
-      format(endDate!, "yyyy-MM-dd"),
-    );
+    try {
+      const success = await window.pywebview.api.generate_report(
+        currentYearFile!,
+        pastYearFile!,
+        configuration?.fournisseurs_exclus.map((s) => s.num) ?? [],
+        format(startDate!, "yyyy-MM-dd"),
+        format(endDate!, "yyyy-MM-dd"),
+      );
+      if (success) {
+        toast.success("Rapport généré avec succès", { position: "top-center" });
+      }
+    } catch (error) {
+      toast.error("Une erreur est survenue lors de la génération du rapport.", {
+        position: "top-center",
+      });
+      console.error(error);
+    }
   }
   return (
     <div className="bg-background h-screen p-5 flex justify-center ">
       <div className="flex flex-col gap-5">
         <div className="flex gap-4.75 max-h-50">
           <Card className="min-w-112.5 pt-2 gap-5 h-54">
-            <CardHeader className="border-b font-bold text-lg py-3! px-4!">
+            <CardHeader className="border-b border-secondary  font-medium  text-lg py-3! px-4!">
               Période de la declaration
             </CardHeader>
             <CardContent className="flex gap-8 pt-3  items-center mb-5">
@@ -127,8 +154,8 @@ function App() {
             </CardContent>
           </Card>
           <Card className="min-w-112.5 pt-2 gap-2 h-54">
-            <CardHeader className="border-b font-bold text-lg py-2! px-4!">
-              <div className="flex justify-between items-center">
+            <CardHeader className="border-b border-secondary font-bold text-lg py-2! px-4!">
+              <div className="flex justify-between items-center  border-secondary  font-medium">
                 Codes journaux
                 {configuration && (
                   <DialogModify
@@ -139,7 +166,7 @@ function App() {
               </div>
             </CardHeader>
             <CardContent className="flex flex-col  gap-1 pt-0!">
-              <div className="text-[15px] border-b  flex items-center justify-between py-2">
+              <div className="text-[15px] border-b border-secondary flex items-center justify-between py-2">
                 <h3 className="text-muted-foreground">Factures</h3>
                 <div className="flex gap-2">
                   {factures.length === 0 ? (
@@ -157,7 +184,7 @@ function App() {
                   )}
                 </div>
               </div>
-              <div className="text-[15px] border-b flex items-center justify-between py-2">
+              <div className="text-[15px] border-b border-secondary flex items-center justify-between py-2">
                 <h3 className="text-muted-foreground">Paiements</h3>
                 <div className="flex gap-2">
                   {paiements.length === 0 ? (
@@ -220,8 +247,20 @@ function App() {
             setRefreshConfig={setRefreshConfig}
           />
         </div>
-        <div className="flex justify-end">
-          <Button onClick={() => generateReport()}>Générer le rapport</Button>
+        <div className="flex justify-end gap-2">
+          <Button
+            className="cursor-pointer  bg-gray-100 shadow-lg"
+            variant="outline"
+            onClick={() => {
+              reset();
+              toast.info("Formulaire réinitialisé", { position: "top-center" });
+            }}
+          >
+            Réinitialiser
+          </Button>
+          <Button className="cursor-pointer" onClick={() => generateReport()}>
+            Générer le rapport
+          </Button>
         </div>
       </div>
     </div>

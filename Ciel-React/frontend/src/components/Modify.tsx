@@ -70,7 +70,10 @@ export function DialogModify({ config, setRefreshConfig }: DialogModifyProps) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="cursor-pointer">
+        <Button
+          variant="outline"
+          className="cursor-pointer  bg-gray-100 shadow-lg"
+        >
           Modifier
         </Button>
       </DialogTrigger>
@@ -172,6 +175,7 @@ export function DialogModify({ config, setRefreshConfig }: DialogModifyProps) {
           <DialogClose asChild>
             <Button
               variant="outline"
+              className="cursor-pointer  bg-gray-100 shadow-lg"
               onClick={() => {
                 setInputValue("");
                 setActiveSection(null);

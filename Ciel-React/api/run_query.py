@@ -68,5 +68,6 @@ def run_query(current_year_file, past_year_files, excluded_suppliers, start, end
 
 
     result.to_excel(output_path, index=False)
-
+    
     os.startfile(output_path)
+    return True

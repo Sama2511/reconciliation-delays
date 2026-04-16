@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type Config from "@/lib/types";
-import { CheckIcon, PlusIcon, XIcon } from "lucide-react";
+import { CheckIcon, PlusIcon, Trash2, XIcon } from "lucide-react";
 import { useState } from "react";
 
 interface ExcludeSupplierProps {
@@ -52,12 +52,12 @@ export function SupplierExcluded({
 
   return (
     <Card className="pt-2 gap-0 w-110 min-w-110 pb-2">
-      <CardHeader className="border-b font-bold text-lg py-2! px-4! ">
-        <div className="flex justify-between items-center">
+      <CardHeader className="font-bold text-lg py-2! px-4! ">
+        <div className="flex justify-between items-center font-medium ">
           Fournisseurs exclus
           <Button
             variant="outline"
-            className="cursor-pointer"
+            className="cursor-pointer  bg-gray-100 shadow-lg"
             onClick={() => setIsAdding(true)}
           >
             <PlusIcon className="h-3.5 w-3.5" />
@@ -65,7 +65,7 @@ export function SupplierExcluded({
           </Button>
         </div>
       </CardHeader>
-      <div className="grid grid-cols-[1fr_2fr_auto] text-xs font-semibold text-muted-foreground tracking-widest px-4 py-2.5 bg-muted border-b ">
+      <div className="grid grid-cols-[1fr_2fr_auto] text-xs font-semibold text-muted-foreground tracking-widest px-4 py-2.5 bg-muted  ">
         <span>N° COMPTE</span>
         <span>FOURNISSEUR</span>
         <span />
@@ -76,25 +76,29 @@ export function SupplierExcluded({
             Aucun fournisseur exclu
           </p>
         )}
-        {config?.fournisseurs_exclus.map((supplier, i) => (
+        {config?.fournisseurs_exclus.map((supplier) => (
           <div
             key={supplier.num}
-            className={`grid grid-cols-[1fr_2fr_auto]  items-center px-4 py-3 ${i < config.fournisseurs_exclus.length - 1 ? "border-b border-muted" : ""}`}
+            className={`grid grid-cols-[1fr_2fr_auto] font-medium border-b border-secondary`}
           >
-            <span className="text-sm text-muted-foreground">
+            <div className="flex items-center ml-1 px-4 py-2 border-r border-muted text-sm">
               {supplier.num}
-            </span>
-            <span className="text-sm font-semibold">{supplier.name}</span>
-            <button
-              className="text-muted-foreground hover:text-destructive cursor-pointer"
-              onClick={() => deleteSupplier(supplier.num)}
-            >
-              <XIcon className="h-3.5 w-3.5" />
-            </button>
+            </div>
+            <div className="flex items-center ml-2 px-4 py-2  text-sm">
+              {supplier.name}
+            </div>
+            <div className="flex items-center px-4 py-2">
+              <button
+                className="text-muted-foreground hover:text-destructive cursor-pointer"
+                onClick={() => deleteSupplier(supplier.num)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         ))}
         {isAdding && (
-          <div className="grid grid-cols-[1fr_2fr_auto] items-center px-4 py-2 border-t gap-2">
+          <div className="grid grid-cols-[1fr_2fr_auto] items-center px-4 py-2 border-t border-secondary gap-2">
             <input
               autoFocus
               placeholder="N° compte"
@@ -107,7 +111,7 @@ export function SupplierExcluded({
               }}
             />
             <input
-              placeholder="Nom fournisseur"
+              placeholder="Nom fournisseur (optionnel)"
               className="h-7 px-2 text-sm border border-border bg-muted w-full"
               value={nameInput}
               maxLength={25}
