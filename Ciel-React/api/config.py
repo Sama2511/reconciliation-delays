@@ -1,7 +1,6 @@
 
 import json
 
-
 DEFAULT_CONFIG = {
     "journal_factures": [],
     "journal_paiements": [],
@@ -16,6 +15,7 @@ def load_config():
     try:
         with open("config.json") as file:
             config_file = json.load(file)
+        config_file = {**DEFAULT_CONFIG, **config_file}
         return config_file
     except FileNotFoundError:
         with open('config.json', 'w') as f :

@@ -13,22 +13,29 @@ def month_delay(due_date, payment_date, end_date):
         return ((payment_date.year - due_date.year)*12 + (payment_date.month - due_date.month) + 1)
     else:
         return ((end_date.year - due_date.year)*12 + (end_date.month - due_date.month) +1 )
-    
 
 
-def run_query(current_year_file, past_year_files, excluded_suppliers, start, end_date, output_path):
+
+def run_query(current_year_file, past_year_files, excluded_suppliers, start, end_date, output_path,
+              journal_achat, journal_paiements, journal_report, condition_default, conditions_fournisseur):
     start_date = datetime.datetime.strptime(start, '%Y-%m-%d').date()
     end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d').date()
     start_year = datetime.date(start_date.year, 1, 1)
-    df_clean, df_clean_past = clean_excel(current_year_file, past_year_files, excluded_suppliers)
 
-    q1 = query_1(df_clean, start_date, end_date)
-    q2 = query_2(df_clean, start_date, end_date, start_year)
-    q3 = query_3(df_clean, start_date, end_date, start_year)
-    q4 = query_4(df_clean, df_clean_past, start_date, end_date, start_year)
-    q5 = query_5(df_clean, df_clean_past, end_date, start_year)
+    journal_codes = journal_achat + journal_paiements + journal_report
+    custom_condition = {c['num']: c['days'] for c in conditions_fournisseur}
+
+    df_clean, df_clean_past = clean_excel(current_year_file, past_year_files, excluded_suppliers,
+                                          condition_default, custom_condition, journal_codes, journal_achat)
+
+    q1 = query_1(df_clean, start_date, end_date, journal_achat, journal_codes)
+    q2 = query_2(df_clean, start_date, end_date, start_year, journal_achat, journal_codes)
+    q3 = query_3(df_clean, start_date, end_date, start_year, journal_achat, journal_codes)
+    q4 = query_4(df_clean, df_clean_past, start_date, end_date, start_year, journal_achat, journal_report, journal_codes)
+    q5 = query_5(df_clean, df_clean_past, end_date, start_year, journal_achat, journal_report, journal_codes)
 
     result = pd.concat([q1, q2, q3, q4, q5])
+    # result = result.loc[:, ~result.columns.duplicated()]
     result['Statut Paiement'] = result['date_paiement'].apply(lambda x: 'Réglée' if pd.notna(x) else 'Non Réglée')
 
     result.drop(columns=['Num fournisseur', 'montant_debit','lettrage'],inplace=True)
@@ -50,10 +57,10 @@ def run_query(current_year_file, past_year_files, excluded_suppliers, start, end
     result['Retard Jours'] = (result['Delai paiement (jrs)'] - result['Condition de paiement']).where(result['Delai paiement (jrs)'] > result['Condition de paiement'])
     
     result['Retard mois'] = result.apply(
-    lambda row: month_delay(row["date d'echeance"], row['date_paiement'], end_date) 
-    if (row['Retard Jours'] > 0) or (pd.isna(row['date_paiement']) and row["date d'echeance"] < pd.Timestamp(end_date)) 
-    else None, axis=1
-)
+        lambda row: month_delay(row["date d'echeance"], row['date_paiement'], end_date)
+        if (row['Retard Jours'] > 0) or (pd.isna(row['date_paiement']) and row["date d'echeance"] < pd.Timestamp(end_date))
+        else None, axis=1
+    )
     
     result['date_paiement'] = result['date_paiement'].dt.date
     result['date_facture'] = result['date_facture'].dt.date

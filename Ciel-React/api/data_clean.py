@@ -1,22 +1,11 @@
 import pandas as pd
 
 
-exclude_supplier = ['12123123','12132189']
-journal_achat = ['HA']
-journal_report_nouveau = ['AN']
-journal_tresorie = ['CA','BC']
-journal_codes= journal_achat + journal_tresorie + journal_report_nouveau
-custom_condition = [{'44111041':90},{'44111021':120}]
+def filter_supplier_condition(num_supplier, condition_default, custom_condition):
+    return custom_condition.get(num_supplier, condition_default)
 
 
-def filter_supplier_condition(num_supplier):
-    for supplier in custom_condition:
-        for key, value in supplier.items():
-            if num_supplier == key:
-                return value
-    return 30
-
-def clean_excel(current_year_file, past_year_file, excluded_suppliers):
+def clean_excel(current_year_file, past_year_file, excluded_suppliers, condition_default, custom_condition, journal_codes,journal_achat):
     cleaned_rows_current_year = []
     cleaned_rows_past_year = []
     current_supplier_number = None
@@ -25,15 +14,12 @@ def clean_excel(current_year_file, past_year_file, excluded_suppliers):
 
     df_raw_current_year = pd.read_excel(current_year_file, header=None)
     for _, row in df_raw_current_year.iterrows():
-            
         first_cell = str(row[0]).strip()
-
 
         if first_cell.startswith('4411'):
             current_supplier_number = first_cell.split()[0]
             current_supplier_name = ' '.join(first_cell.split()[1:])
-            current_payement_condition = filter_supplier_condition(current_supplier_number)
-
+            current_payement_condition = filter_supplier_condition(current_supplier_number, condition_default, custom_condition)
 
         elif str(row[1]).strip() in journal_codes:
             cleaned_rows_current_year.append({
@@ -57,11 +43,10 @@ def clean_excel(current_year_file, past_year_file, excluded_suppliers):
     for _, row in df_raw_past_year.iterrows():
         first_cell = str(row[0]).strip()
 
-
         if first_cell.startswith('4411'):
             current_supplier_number = first_cell.split()[0]
             current_supplier_name = ' '.join(first_cell.split()[1:])
-            current_payement_condition = filter_supplier_condition(current_supplier_number)
+            current_payement_condition = filter_supplier_condition(current_supplier_number, condition_default, custom_condition)
 
         elif str(row[1]).strip() in journal_codes:
             cleaned_rows_past_year.append({
@@ -75,7 +60,7 @@ def clean_excel(current_year_file, past_year_file, excluded_suppliers):
                 'montant_credit': row[10],
                 'lettrage': row[9],
                 'Condition de paiement': current_payement_condition,
-                  })
+            })
 
     df_results_current_year = pd.DataFrame(cleaned_rows_current_year)
     df_clean = df_results_current_year[~df_results_current_year['Num fournisseur'].isin(excluded_suppliers)]

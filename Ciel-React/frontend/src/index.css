@@ -3,6 +3,43 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
 
+@font-face {
+  font-family: "SourceSans3";
+  src: url("/fonts/SourceSans3-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "SourceSans3";
+  src: url("/fonts/SourceSans3-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+}
+@font-face {
+  font-family: "SourceSans3";
+  src: url("/fonts/SourceSans3-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+}
+@font-face {
+  font-family: "SourceSans3";
+  src: url("/fonts/SourceSans3-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+}
+@font-face {
+  font-family: "SourceSans3";
+  src: url("/fonts/SourceSans3-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: "SourceSans3";
+  src: url("/fonts/SourceSans3-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -12,7 +49,7 @@
   --card-foreground: oklch(0.3485 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.3485 0 0);
-  --primary: oklch(0.4891 0 0);
+  --primary: oklch(27.274% 0.00003 271.152);
   --primary-foreground: oklch(0.9551 0 0);
   --secondary: oklch(0.9006 0 0);
   --secondary-foreground: oklch(0.3485 0 0);
@@ -38,10 +75,10 @@
   --sidebar-accent-foreground: oklch(0.4015 0.0436 37.9587);
   --sidebar-border: oklch(0.8078 0 0);
   --sidebar-ring: oklch(0.7058 0 0);
-  --font-sans: Inter, ui-sans-serif, sans-serif, system-ui;
+  --font-sans: "SourceSans3", Inter, ui-sans-serif, sans-serif, system-ui;
   --font-serif: "Times New Roman", Times, serif;
   --font-mono: "Courier New", Courier, monospace;
-  --radius: 0rem;
+  --radius: 6px;
   --shadow-x: 1px;
   --shadow-y: 4px;
   --shadow-blur: 5px;
@@ -98,7 +135,7 @@
   --sidebar-accent-foreground: oklch(0.3211 0 0);
   --sidebar-border: oklch(0.4276 0 0);
   --sidebar-ring: oklch(0.8078 0 0);
-  --font-sans: Inter, ui-sans-serif, sans-serif, system-ui;
+  --font-sans: "SourceSans3", Inter, ui-sans-serif, sans-serif, system-ui;
   --font-serif: Georgia, serif;
   --font-mono: "Fira Code", "Courier New", monospace;
   --radius: 0rem;
