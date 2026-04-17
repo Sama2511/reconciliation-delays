@@ -15,7 +15,6 @@ def month_delay(due_date, payment_date, end_date):
         return ((end_date.year - due_date.year)*12 + (end_date.month - due_date.month) +1 )
 
 
-
 def run_query(current_year_file, past_year_files, excluded_suppliers, start, end_date, output_path,
               journal_achat, journal_paiements, journal_report, condition_default, conditions_fournisseur):
     start_date = datetime.datetime.strptime(start, '%Y-%m-%d').date()
@@ -66,8 +65,7 @@ def run_query(current_year_file, past_year_files, excluded_suppliers, start, end
     result['date_facture'] = result['date_facture'].dt.date
     result["date d'echeance"] = result["date d'echeance"].dt.date
 
-
+    result = result[['Nom fournisseur', 'journal', 'libelle', 'N° Facture', 'date_facture', 'Montant Facture', 'mois_livraison', 'Condition de paiement', "date d'echeance", 'Statut Paiement', 'date_paiement', 'montant_paiement', 'Delai paiement (jrs)', 'Retard mois']]
     result.to_excel(output_path, index=False)
-    
+
     os.startfile(output_path)
-    return True
