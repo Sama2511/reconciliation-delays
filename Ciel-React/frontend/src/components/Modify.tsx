@@ -14,6 +14,7 @@ import { Check, PlusIcon, X, XIcon } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { Input } from "./ui/input";
+import { toast } from "sonner";
 
 interface DialogModifyProps {
   config: Config | undefined;
@@ -34,6 +35,12 @@ export function DialogModify({ config, setRefreshConfig }: DialogModifyProps) {
     setOpen(isOpen);
   }
   async function save() {
+    if (inputValue) {
+      toast.error("Veuillez valider ou annuler le code en cours d'ajout", {
+        position: "top-center",
+      });
+      return;
+    }
     await window.pywebview.api.save_config(localConfig);
     setRefreshConfig((prev) => prev + 1);
     setOpen(false);
@@ -55,9 +62,11 @@ export function DialogModify({ config, setRefreshConfig }: DialogModifyProps) {
 
   function addCode(configKey: string, code: string) {
     if (!localConfig) return;
+    if (code.length <= 0) return;
     const clean_config = Object.entries(localConfig).map(([key, values]) => {
       if (key == configKey && Array.isArray(values)) {
-        const new_values = [...values, code];
+        if (values.includes(code.toUpperCase())) return [key, values];
+        const new_values = [...values, code.toUpperCase()];
         return [key, new_values];
       } else {
         return [key, values];
@@ -79,7 +88,7 @@ export function DialogModify({ config, setRefreshConfig }: DialogModifyProps) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle className="font-semibold">
+          <DialogTitle className="font-semibold text-[16px]">
             Modifier les codes journaux
           </DialogTitle>
           <DialogDescription>
@@ -128,6 +137,11 @@ export function DialogModify({ config, setRefreshConfig }: DialogModifyProps) {
                       className="h-7 w-16 px-2 text-sm uppercase border border-border bg-muted"
                       value={inputValue}
                       onChange={(event) => setInputValue(event?.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          addCode(section.configKey, inputValue);
+                        }
+                      }}
                     />
                     {inputValue && (
                       <>

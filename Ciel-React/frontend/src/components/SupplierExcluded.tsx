@@ -14,12 +14,16 @@ export function SupplierExcluded({
   setRefreshConfig,
 }: ExcludeSupplierProps) {
   const [isAdding, setIsAdding] = useState(false);
-  const [numImput, setNumInput] = useState("");
+  const [numInput, setNumInput] = useState("");
   const [nameInput, setNameInput] = useState("");
   const [isNumError, setIsNumError] = useState(false);
-  async function addSupllier(supplierNumber: string, supplierName: string) {
+
+  async function addSupplier(supplierNumber: string, supplierName: string) {
     if (!config) return;
-    if (!numImput) return;
+    if (!numInput) {
+      setIsNumError(true);
+      return;
+    }
     const clean_config = Object.entries(config).map(([key, values]) => {
       if (key === "fournisseurs_exclus") {
         const added_supplier = [
@@ -51,7 +55,7 @@ export function SupplierExcluded({
   }
 
   return (
-    <Card className="pt-2 gap-0 w-110 min-w-110 pb-2">
+    <Card className="pt-2 gap-0 w-110 min-w-110 pb-2 shadow-[0_0_15px_rgba(0,0,0,0.1)]">
       <CardHeader className="font-bold text-lg py-2! px-4! ">
         <div className="flex justify-between items-center font-medium ">
           Fournisseurs exclus
@@ -104,10 +108,15 @@ export function SupplierExcluded({
               placeholder="N° compte"
               className={`h-7 px-2 text-sm border border-border bg-muted w-full ${isNumError ? "border-red-500" : "border-border"}`}
               maxLength={12}
-              value={numImput}
+              value={numInput}
               onChange={(event) => {
                 setNumInput(event.target.value);
                 setIsNumError(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  addSupplier(numInput, nameInput);
+                }
               }}
             />
             <input
@@ -116,16 +125,17 @@ export function SupplierExcluded({
               value={nameInput}
               maxLength={25}
               onChange={(event) => setNameInput(event.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  addSupplier(numInput, nameInput);
+                }
+              }}
             />
             <div className="flex items-center gap-1">
               <button
                 className="h-7 w-7 flex items-center justify-center text-green-600 hover:text-green-700 hover:bg-green-50 cursor-pointer"
                 onClick={() => {
-                  if (!numImput) {
-                    setIsNumError(true);
-                    return;
-                  }
-                  addSupllier(numImput, nameInput);
+                  addSupplier(numInput, nameInput);
                 }}
               >
                 <CheckIcon className="h-3.5 w-3.5" />

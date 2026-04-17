@@ -1,7 +1,12 @@
 import webview
-import tkinter as tk
 from api.config import load_config, save_config
 from api.run_query import run_query
+import os
+import sys
+BASE_DIR = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(__file__))
+
+
+
 class API:
     def load_config(self):
         return load_config()
@@ -48,11 +53,12 @@ class API:
         if result:
             return result[0]
         return None
-    
 
 
 
 if __name__ == '__main__':
     api = API()
-    window = webview.create_window('Délai de Paiement', 'http://localhost:5173', width=1050, height=850, resizable=False, js_api=api)
-    webview.start(debug=True)
+    window = webview.create_window('Délai de Paiement', 'frontend/dist/index.html', width=1050, height=860, resizable=False, js_api=api)
+    webview.start()
+
+

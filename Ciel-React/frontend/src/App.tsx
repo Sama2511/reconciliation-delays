@@ -9,6 +9,7 @@ import { SupplierExcluded } from "./components/SupplierExcluded";
 import { PayementCondition } from "./components/PayementCondition";
 import { Button } from "./components/ui/button";
 import { format } from "date-fns";
+import { Spinner } from "./components/ui/spinner";
 
 function App() {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
@@ -19,9 +20,9 @@ function App() {
   const [configuration, setConfiguration] = useState<Config | undefined>(
     undefined,
   );
+  const [isGenerating, setIsGenerating] = useState(false);
   const [currentYearFile, setCurrentYearFile] = useState<string | null>(null);
   const [pastYearFile, setPastYearFile] = useState<string | null>(null);
-
   const [refreshConfig, setRefreshConfig] = useState(0);
   const [hasCurrentFileError, setHasCurrentFileError] = useState(false);
   const [hasPastFileError, setHasPastFileError] = useState(false);
@@ -107,6 +108,7 @@ function App() {
       return;
     }
     try {
+      setIsGenerating(true);
       const success = await window.pywebview.api.generate_report(
         currentYearFile!,
         pastYearFile!,
@@ -115,20 +117,25 @@ function App() {
         format(endDate!, "yyyy-MM-dd"),
       );
       if (success) {
-        toast.success("Rapport généré avec succès", { position: "top-center" });
+        toast.success(
+          "Rapport généré avec succès, il s'ouvrira automatiquement.",
+          { position: "top-center" },
+        );
       }
     } catch (error) {
       toast.error("Une erreur est survenue lors de la génération du rapport.", {
         position: "top-center",
       });
       console.error(error);
+    } finally {
+      setIsGenerating(false);
     }
   }
   return (
     <div className="bg-background h-screen p-5 flex justify-center ">
       <div className="flex flex-col gap-5">
         <div className="flex gap-4.75 max-h-50">
-          <Card className="min-w-112.5 pt-2 gap-5 h-54">
+          <Card className="min-w-112.5 pt-2 gap-5 h-54 shadow-[0_0_15px_rgba(0,0,0,0.1)]">
             <CardHeader className="border-b border-secondary  font-medium  text-lg py-3! px-4!">
               Période de la declaration
             </CardHeader>
@@ -153,7 +160,7 @@ function App() {
               />
             </CardContent>
           </Card>
-          <Card className="min-w-112.5 pt-2 gap-2 h-54">
+          <Card className="min-w-112.5 pt-2 gap-2 h-54 shadow-[0_0_15px_rgba(0,0,0,0.1)]">
             <CardHeader className="border-b border-secondary font-bold text-lg py-2! px-4!">
               <div className="flex justify-between items-center  border-secondary  font-medium">
                 Codes journaux
@@ -167,7 +174,7 @@ function App() {
             </CardHeader>
             <CardContent className="flex flex-col  gap-1 pt-0!">
               <div className="text-[15px] border-b border-secondary flex items-center justify-between py-2">
-                <h3 className="text-muted-foreground">Factures</h3>
+                <h3 className="text-muted-foreground ">Factures</h3>
                 <div className="flex gap-2">
                   {factures.length === 0 ? (
                     <p
@@ -177,7 +184,10 @@ function App() {
                     </p>
                   ) : (
                     factures.map((facture) => (
-                      <p className="border py-0.5 px-1 bg-accent text-sm">
+                      <p
+                        key={facture}
+                        className="border py-0.5 px-1 bg-accent text-sm font-semibold"
+                      >
                         {facture}
                       </p>
                     ))
@@ -185,7 +195,7 @@ function App() {
                 </div>
               </div>
               <div className="text-[15px] border-b border-secondary flex items-center justify-between py-2">
-                <h3 className="text-muted-foreground">Paiements</h3>
+                <h3 className="text-muted-foreground ">Paiements</h3>
                 <div className="flex gap-2">
                   {paiements.length === 0 ? (
                     <p
@@ -195,7 +205,10 @@ function App() {
                     </p>
                   ) : (
                     paiements.map((paiement) => (
-                      <p className="border py-0.5 px-1 bg-accent text-sm">
+                      <p
+                        key={paiement}
+                        className="border py-0.5 px-1 bg-accent text-sm font-semibold"
+                      >
                         {paiement}
                       </p>
                     ))
@@ -203,7 +216,7 @@ function App() {
                 </div>
               </div>
               <div className="text-[15px] flex items-center justify-between py-2">
-                <h3 className="text-muted-foreground">Report à nouveau</h3>
+                <h3 className="text-muted-foreground ">Report à nouveau</h3>
                 <div className="flex gap-2">
                   {reports.length === 0 ? (
                     <p
@@ -213,7 +226,10 @@ function App() {
                     </p>
                   ) : (
                     reports.map((report) => (
-                      <p className="border py-0.5 px-1 bg-accent text-sm">
+                      <p
+                        key={report}
+                        className="border py-0.5 px-1 bg-accent text-sm font-semibold"
+                      >
                         {report}
                       </p>
                     ))
@@ -251,6 +267,7 @@ function App() {
           <Button
             className="cursor-pointer  bg-gray-100 shadow-lg"
             variant="outline"
+            disabled={isGenerating}
             onClick={() => {
               reset();
               toast.info("Formulaire réinitialisé", { position: "top-center" });
@@ -258,8 +275,12 @@ function App() {
           >
             Réinitialiser
           </Button>
-          <Button className="cursor-pointer" onClick={() => generateReport()}>
-            Générer le rapport
+          <Button
+            disabled={isGenerating}
+            className="cursor-pointer"
+            onClick={() => generateReport()}
+          >
+            {isGenerating ? <Spinner /> : "Générer le rapport"}
           </Button>
         </div>
       </div>

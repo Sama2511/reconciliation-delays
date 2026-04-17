@@ -30,11 +30,11 @@ export function ExcelUpload({
   }
 
   return (
-    <Card className="pt-2 gap-2 mt-4">
+    <Card className="pt-2 gap-2 mt-4 shadow-[0_0_15px_rgba(0,0,0,0.1)] pb-0 overflow-visible">
       <CardHeader className="border-b font-medium border-secondary text-lg py-2! px-4!">
         Fichiers Grand Livre
       </CardHeader>
-      <CardContent className="flex gap-8 pt-3 pb-4!">
+      <CardContent className="flex gap-8 pt-3 pb-6!">
         <div className="flex flex-col gap-1.5 flex-1">
           <span className="text-[16px] text-muted-foreground">
             Année précédente

@@ -69,13 +69,13 @@ export function PayementCondition({
   }
 
   return (
-    <Card className="pt-2 gap-0 w-130 pb-2">
+    <Card className="pt-2 gap-0 w-130 pb-2 shadow-[0_0_15px_rgba(0,0,0,0.1)]">
       <CardHeader className=" font-bold  text-lg py-2! px-4!">
         <div className="flex justify-between font-medium items-center">
           Conditions de paiement
           <div className="flex items-center gap-2">
             <span className="text-sm font-normal text-muted-foreground">
-              Défaut
+              Par Défaut
             </span>
             <span className="border  px-2 py-0.5 text-sm font-semibold bg-accent mr-8">
               {config?.condition_default} jours
@@ -139,6 +139,11 @@ export function PayementCondition({
                 setNumInput(e.target.value);
                 setIsNumError(false);
               }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleConfirm();
+                }
+              }}
             />
             <input
               placeholder="Nom fournisseur (optionnel)"
@@ -146,6 +151,11 @@ export function PayementCondition({
               maxLength={25}
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleConfirm();
+                }
+              }}
             />
             <input
               placeholder="Jours"
@@ -155,6 +165,11 @@ export function PayementCondition({
               onChange={(e) => {
                 setDaysInput(e.target.value);
                 setIsDaysError(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleConfirm();
+                }
               }}
             />
             <div className="flex items-center gap-1">
